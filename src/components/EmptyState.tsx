@@ -1,21 +1,22 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { Icon } from './Icon';
 import { colors, spacing } from '../theme';
 
 type EmptyStateProps = {
   titleKey: string;
-  messageKey: string;
+  bodyKey: string;
 };
 
-export function EmptyState({ titleKey, messageKey }: EmptyStateProps) {
+export function EmptyState({ titleKey, bodyKey }: EmptyStateProps) {
   const { t } = useTranslation();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>♡</Text>
+      <Icon color={colors.forest} name="heart-outline" size={48} />
       <Text style={styles.title}>{t(titleKey)}</Text>
-      <Text style={styles.message}>{t(messageKey)}</Text>
+      <Text style={styles.body}>{t(bodyKey)}</Text>
     </View>
   );
 }
@@ -23,25 +24,19 @@ export function EmptyState({ titleKey, messageKey }: EmptyStateProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
+    gap: spacing.sm,
     padding: spacing.xl,
-  },
-  icon: {
-    color: colors.accent,
-    fontSize: 50,
-    marginBottom: spacing.md,
   },
   title: {
     color: colors.text,
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
+    fontSize: 19,
+    fontWeight: '800',
+    textAlign: 'center',
   },
-  message: {
+  body: {
     color: colors.secondaryText,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: 'center',
   },
 });

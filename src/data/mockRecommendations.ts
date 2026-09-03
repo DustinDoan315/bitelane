@@ -1,36 +1,71 @@
-import { Meal, RoutePreferences } from '../types';
+import type { Meal } from '../types';
 
-export function getMockRecommendations(_preferences: RoutePreferences): Meal[] {
-  return [
-    {
-      id: 'meal-1',
-      nameKey: 'meals.meal1.name',
-      cuisineKey: 'meals.meal1.cuisine',
-      venueKey: 'meals.meal1.venue',
-      distanceMinutes: 4,
-      priceText: '₫₫',
-      matchReasonKey: 'meals.meal1.reason',
-      symbol: '🍚',
-    },
-    {
-      id: 'meal-2',
-      nameKey: 'meals.meal2.name',
-      cuisineKey: 'meals.meal2.cuisine',
-      venueKey: 'meals.meal2.venue',
-      distanceMinutes: 7,
-      priceText: '₫₫',
-      matchReasonKey: 'meals.meal2.reason',
-      symbol: '🍜',
-    },
-    {
-      id: 'meal-3',
-      nameKey: 'meals.meal3.name',
-      cuisineKey: 'meals.meal3.cuisine',
-      venueKey: 'meals.meal3.venue',
-      distanceMinutes: 9,
-      priceText: '₫₫₫',
-      matchReasonKey: 'meals.meal3.reason',
-      symbol: '🥗',
-    },
-  ];
-}
+export const featuredMeal: Meal = {
+  id: 'featured-bun-bo-hue',
+  nameKey: 'meals.featured.name',
+  metaKey: 'meals.featured.meta',
+  reasonKey: 'meals.featured.reason',
+  noteKey: 'meals.featured.note',
+  priceText: '₫48k',
+  rating: 4.6,
+  distanceMinutes: 3,
+  closingTime: '14:00',
+  iconName: 'bowl-mix',
+  tileColor: 'peach',
+};
+
+export const savedMeals: Meal[] = [
+  {
+    id: 'saved-chicken',
+    nameKey: 'meals.chicken.name',
+    metaKey: 'meals.chicken.savedMeta',
+    priceText: '₫55k',
+    rating: 4.5,
+    distanceMinutes: 2,
+    alternativeTime: 2,
+    iconName: 'food',
+    tileColor: 'peach',
+  },
+  {
+    id: 'saved-banh-mi',
+    nameKey: 'meals.banhMi.name',
+    metaKey: 'meals.banhMi.savedMeta',
+    priceText: '₫38k',
+    rating: 4.5,
+    distanceMinutes: 1,
+    alternativeTime: 1,
+    iconName: 'baguette',
+    tileColor: 'yellow',
+  },
+];
+
+export const recentMeals: Meal[] = [
+  {
+    ...featuredMeal,
+    metaKey: 'meals.recentMeta',
+    iconName: 'bowl-mix',
+    tileColor: 'green',
+  },
+];
+
+export const alternativeMeals: Meal[] = [
+  {
+    ...savedMeals[0],
+    metaKey: 'meals.chicken.meta',
+  },
+  {
+    id: 'alternative-noodles',
+    nameKey: 'meals.noodles.name',
+    metaKey: 'meals.noodles.meta',
+    priceText: '₫45k',
+    rating: 4.5,
+    distanceMinutes: 4,
+    alternativeTime: 4,
+    iconName: 'bowl-mix',
+    tileColor: 'green',
+  },
+  {
+    ...savedMeals[1],
+    metaKey: 'meals.banhMi.meta',
+  },
+];

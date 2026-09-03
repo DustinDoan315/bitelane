@@ -1,102 +1,157 @@
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { Linking, SafeAreaView, StyleSheet, View } from 'react-native';
 
-import './src/i18n';
-import { TabBar } from './src/components/TabBar';
-import { getMockRecommendations } from './src/data/mockRecommendations';
-import { DiscoverScreen } from './src/screens/DiscoverScreen';
-import { OnboardingScreen } from './src/screens/OnboardingScreen';
-import { ProfileScreen } from './src/screens/ProfileScreen';
-import { RouteScreen } from './src/screens/RouteScreen';
-import { SavedScreen } from './src/screens/SavedScreen';
-import { AppTab, Meal, RoutePreferences } from './src/types';
+import i18n from './src/i18n';
+import { AlternativesScreen } from './src/screens/AlternativesScreen';
+import { FeedbackScreen } from './src/screens/FeedbackScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { MemoryScreen } from './src/screens/MemoryScreen';
+import { SetupCommuteScreen } from './src/screens/SetupCommuteScreen';
+import { SetupGoalScreen } from './src/screens/SetupGoalScreen';
+import { alternativeMeals, featuredMeal, recentMeals, savedMeals } from './src/data/mockRecommendations';
+import { BottomTabBar } from './src/components/BottomTabBar';
+import type { AppScreen, CommutePreferences, MainTab } from './src/types';
+import { colors } from './src/theme';
 
-const initialPreferences: RoutePreferences = {
-  origin: '',
-  destination: '',
-  budget: 'any',
-  mood: '',
+const initialCommute: CommutePreferences = {
+  homeAddress: '123 Nguyễn Văn Linh, Quận 7',
+  workAddress: '18 Nguyễn Đình Chiểu, Quận 3',
+  mode: 'motorbike',
 };
 
 export default function App() {
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<AppTab>('discover');
-  const [routePreferences, setRoutePreferences] = useState(initialPreferences);
-  const [recommendations, setRecommendations] = useState(() =>
-    getMockRecommendations(initialPreferences),
-  );
-  const [savedMealIds, setSavedMealIds] = useState<Set<string>>(new Set());
-
-  const savedMeals = useMemo(
-    () => recommendations.filter((meal) => savedMealIds.has(meal.id)),
-    [recommendations, savedMealIds],
+  const [screen, setScreen] = useState<AppScreen>('goal');
+  const [selectedTab, setSelectedTab] = useState<MainTab>('home');
+  const [commuteReturnScreen, setCommuteReturnScreen] = useState<'goal' | 'home'>('goal');
+  const [commute, setCommute] = useState<CommutePreferences>(initialCommute);
+  const [savedMealIds, setSavedMealIds] = useState<Set<string>>(
+    () => new Set(savedMeals.map((meal) => meal.id)),
   );
 
-  const updatePreference = <Key extends keyof RoutePreferences>(
+  const saved = useMemo(
+    () => [...savedMeals, featuredMeal].filter((meal) => savedMealIds.has(meal.id)),
+    [savedMealIds],
+  );
+
+  const updateCommute = <Key extends keyof CommutePreferences>(
     key: Key,
-    value: RoutePreferences[Key],
+    value: CommutePreferences[Key],
   ) => {
-    setRoutePreferences((current) => ({ ...current, [key]: value }));
+    setCommute((current) => ({ ...current, [key]: value }));
   };
 
-  const toggleSaved = (meal: Meal) => {
+  const selectTab = (tab: MainTab) => {
+    setSelectedTab(tab);
+    setScreen(tab);
+  };
+
+  const toggleSaved = (mealId: string) => {
     setSavedMealIds((current) => {
       const next = new Set(current);
 
-      if (next.has(meal.id)) {
-        next.delete(meal.id);
+      if (next.has(mealId)) {
+        next.delete(mealId);
       } else {
-        next.add(meal.id);
+        next.add(mealId);
       }
 
       return next;
     });
   };
 
-  const refreshRecommendations = () => {
-    setRecommendations(getMockRecommendations(routePreferences));
+  const toggleLanguage = () => {
+    void i18n.changeLanguage(i18n.resolvedLanguage === 'vi' ? 'en' : 'vi');
   };
 
-  if (!hasCompletedOnboarding) {
-    return <OnboardingScreen onContinue={() => setHasCompletedOnboarding(true)} />;
+  if (screen === 'goal') {
+    return (
+      <SetupGoalScreen
+        onContinue={() => {
+          setCommuteReturnScreen('goal');
+          setScreen('commute');
+        }}
+        onSkip={() => setScreen('home')}
+      />
+    );
   }
 
-  const content = {
-    discover: (
-      <DiscoverScreen
-        preferences={routePreferences}
-        recommendations={recommendations}
-        savedMealIds={savedMealIds}
-        onOpenRoute={() => setSelectedTab('route')}
-        onRefresh={refreshRecommendations}
-        onToggleSaved={toggleSaved}
+  if (screen === 'commute') {
+    return (
+      <SetupCommuteScreen
+        onBack={() => setScreen(commuteReturnScreen)}
+        onChange={updateCommute}
+        onSave={() => setScreen('home')}
+        preferences={commute}
       />
-    ),
-    route: (
-      <RouteScreen
-        preferences={routePreferences}
-        onApply={refreshRecommendations}
-        onChange={updatePreference}
-      />
-    ),
-    saved: <SavedScreen meals={savedMeals} onToggleSaved={toggleSaved} />,
-    profile: <ProfileScreen />,
-  }[selectedTab];
+    );
+  }
+
+  let content: ReactNode = null;
+
+  switch (screen) {
+    case 'home':
+      content = (
+        <HomeScreen
+          commute={commute}
+          featuredMeal={featuredMeal}
+          onEditCommute={() => {
+            setCommuteReturnScreen('home');
+            setScreen('commute');
+          }}
+          onNavigate={() => {
+            void Linking.openURL(
+              `https://maps.apple.com/?daddr=${encodeURIComponent(commute.workAddress)}`,
+            );
+          }}
+          onToggleLanguage={toggleLanguage}
+          onTryAnother={() => setScreen('feedback')}
+        />
+      );
+      break;
+    case 'history':
+      content = <MemoryScreen recentMeals={recentMeals} savedMeals={saved} segment="recent" />;
+      break;
+    case 'saved':
+      content = <MemoryScreen recentMeals={recentMeals} savedMeals={saved} segment="saved" />;
+      break;
+    case 'alternatives':
+      content = (
+        <AlternativesScreen
+          meals={alternativeMeals}
+          onBack={() => setScreen('feedback')}
+          onBackToPick={() => setScreen('home')}
+        />
+      );
+      break;
+    case 'feedback':
+      content = (
+        <FeedbackScreen
+          onClose={() => setScreen('home')}
+          onShowBetter={() => setScreen('alternatives')}
+        />
+      );
+      break;
+    default:
+      content = null;
+  }
+
+  const showTabBar = screen === 'home' || screen === 'history' || screen === 'saved';
 
   return (
     <SafeAreaView style={styles.app}>
       <StatusBar style="dark" />
       <View style={styles.content}>{content}</View>
-      <TabBar selectedTab={selectedTab} onSelect={setSelectedTab} />
+      {showTabBar ? <BottomTabBar selectedTab={selectedTab} onSelect={selectTab} /> : null}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   app: {
+    backgroundColor: colors.background,
     flex: 1,
-    backgroundColor: '#F7F7F5',
   },
   content: {
     flex: 1,
