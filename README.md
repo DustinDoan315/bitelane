@@ -10,6 +10,7 @@ Expo React Native foundation for BiteLane: food recommendations that fit a user'
 - Mock meal recommendations
 - In-memory route preferences and saved meals
 - Shared theme and reusable meal/empty-state components
+- English/Vietnamese localization with `i18next`, `react-i18next`, and device locale detection
 
 ## Run locally
 
@@ -19,6 +20,8 @@ npm run start
 ```
 
 Then press `i` for the iOS simulator, or scan the QR code with Expo Go.
+
+The initial language follows the device locale (`vi` uses Vietnamese; all other locales use English). You can switch between English and Vietnamese from the Profile tab.
 
 ## Planned next slices
 

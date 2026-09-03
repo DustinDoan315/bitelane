@@ -11,11 +11,11 @@ export type RoutePreferences = {
 
 export type Meal = {
   id: string;
-  name: string;
-  cuisine: string;
-  venue: string;
-  distanceText: string;
+  nameKey: string;
+  cuisineKey: string;
+  venueKey: string;
+  distanceMinutes: number;
   priceText: string;
-  matchReason: string;
+  matchReasonKey: string;
   symbol: string;
 };

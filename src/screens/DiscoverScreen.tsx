@@ -1,4 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { MealCard } from '../components/MealCard';
 import { colors, spacing } from '../theme';
@@ -21,33 +22,35 @@ export function DiscoverScreen({
   onRefresh,
   onToggleSaved,
 }: DiscoverScreenProps) {
+  const { t } = useTranslation();
   const routeSummary = preferences.origin.trim() && preferences.destination.trim()
-    ? `${preferences.origin} → ${preferences.destination}`
-    : 'Set a route to personalize recommendations';
+    ? t('discover.routeSummary', {
+        origin: preferences.origin,
+        destination: preferences.destination,
+      })
+    : t('discover.routeEmpty');
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.headingBlock}>
-        <Text style={styles.eyebrow}>ON YOUR WAY</Text>
-        <Text style={styles.title}>Find your next meal.</Text>
-        <Text style={styles.subtitle}>
-          Good food that fits your route, budget, and mood.
-        </Text>
+        <Text style={styles.eyebrow}>{t('discover.eyebrow')}</Text>
+        <Text style={styles.title}>{t('discover.title')}</Text>
+        <Text style={styles.subtitle}>{t('discover.subtitle')}</Text>
       </View>
 
       <Pressable accessibilityRole="button" onPress={onOpenRoute} style={styles.routeCard}>
         <Text style={styles.routeIcon}>⌖</Text>
         <View style={styles.routeText}>
-          <Text style={styles.routeLabel}>YOUR ROUTE</Text>
+          <Text style={styles.routeLabel}>{t('discover.routeLabel')}</Text>
           <Text numberOfLines={2} style={styles.routeSummary}>{routeSummary}</Text>
         </View>
         <Text style={styles.chevron}>›</Text>
       </Pressable>
 
       <View style={styles.recommendationHeader}>
-        <Text style={styles.sectionTitle}>Recommended for you</Text>
+        <Text style={styles.sectionTitle}>{t('discover.recommendations')}</Text>
         <Pressable accessibilityRole="button" onPress={onRefresh}>
-          <Text style={styles.refresh}>Refresh</Text>
+          <Text style={styles.refresh}>{t('discover.refresh')}</Text>
         </Pressable>
       </View>
 

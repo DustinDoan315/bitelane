@@ -1,18 +1,21 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { colors, spacing } from '../theme';
 
 type EmptyStateProps = {
-  title: string;
-  message: string;
+  titleKey: string;
+  messageKey: string;
 };
 
-export function EmptyState({ title, message }: EmptyStateProps) {
+export function EmptyState({ titleKey, messageKey }: EmptyStateProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
       <Text style={styles.icon}>♡</Text>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
+      <Text style={styles.title}>{t(titleKey)}</Text>
+      <Text style={styles.message}>{t(messageKey)}</Text>
     </View>
   );
 }

@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 
+import './src/i18n';
 import { TabBar } from './src/components/TabBar';
 import { getMockRecommendations } from './src/data/mockRecommendations';
 import { DiscoverScreen } from './src/screens/DiscoverScreen';

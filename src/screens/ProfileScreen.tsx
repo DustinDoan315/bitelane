@@ -1,21 +1,40 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
+import i18n, { supportedLanguages, type SupportedLanguage } from '../i18n';
 import { colors, spacing } from '../theme';
 
-const rows = [
-  { label: 'Language', value: 'English' },
-  { label: 'Notifications', value: 'Coming soon' },
-  { label: 'Help & feedback', value: 'Coming soon' },
-  { label: 'Privacy', value: 'Coming soon' },
-];
-
 export function ProfileScreen() {
+  const { t } = useTranslation();
+  const currentLanguage: SupportedLanguage = i18n.resolvedLanguage === 'vi' ? 'vi' : 'en';
+  const nextLanguage: SupportedLanguage = currentLanguage === 'en' ? 'vi' : 'en';
+  const currentLanguageLabel =
+    supportedLanguages.find((language) => language.code === currentLanguage)?.label ?? currentLanguage;
+
+  const changeLanguage = () => {
+    void i18n.changeLanguage(nextLanguage);
+  };
+
+  const rows = [
+    { label: t('profile.notifications'), value: t('profile.comingSoon') },
+    { label: t('profile.help'), value: t('profile.comingSoon') },
+    { label: t('profile.privacy'), value: t('profile.comingSoon') },
+  ];
+
   return (
     <View style={styles.content}>
-      <Text style={styles.title}>Profile</Text>
-      <Text style={styles.subtitle}>Personal preferences will live here.</Text>
+      <Text style={styles.title}>{t('profile.title')}</Text>
+      <Text style={styles.subtitle}>{t('profile.subtitle')}</Text>
 
       <View style={styles.card}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={changeLanguage}
+          style={styles.row}
+        >
+          <Text style={styles.label}>{t('profile.language')}</Text>
+          <Text style={styles.value}>{currentLanguageLabel}</Text>
+        </Pressable>
         {rows.map((row) => (
           <View key={row.label} style={styles.row}>
             <Text style={styles.label}>{row.label}</Text>

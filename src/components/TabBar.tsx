@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { colors } from '../theme';
 import { AppTab } from '../types';
@@ -8,14 +9,16 @@ type TabBarProps = {
   onSelect: (tab: AppTab) => void;
 };
 
-const tabs: Array<{ key: AppTab; label: string; icon: string }> = [
-  { key: 'discover', label: 'Discover', icon: '⌕' },
-  { key: 'route', label: 'Route', icon: '↗' },
-  { key: 'saved', label: 'Saved', icon: '♡' },
-  { key: 'profile', label: 'Profile', icon: '◯' },
+const tabs: Array<{ key: AppTab; labelKey: string; icon: string }> = [
+  { key: 'discover', labelKey: 'tabs.discover', icon: '⌕' },
+  { key: 'route', labelKey: 'tabs.route', icon: '↗' },
+  { key: 'saved', labelKey: 'tabs.saved', icon: '♡' },
+  { key: 'profile', labelKey: 'tabs.profile', icon: '◯' },
 ];
 
 export function TabBar({ selectedTab, onSelect }: TabBarProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.bar}>
       {tabs.map((tab) => {
@@ -30,7 +33,7 @@ export function TabBar({ selectedTab, onSelect }: TabBarProps) {
             style={styles.tab}
           >
             <Text style={[styles.icon, isSelected && styles.selected]}>{tab.icon}</Text>
-            <Text style={[styles.label, isSelected && styles.selected]}>{tab.label}</Text>
+            <Text style={[styles.label, isSelected && styles.selected]}>{t(tab.labelKey)}</Text>
           </Pressable>
         );
       })}

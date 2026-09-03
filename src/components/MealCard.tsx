@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { colors, spacing } from '../theme';
 import { Meal } from '../types';
@@ -10,6 +11,8 @@ type MealCardProps = {
 };
 
 export function MealCard({ meal, isSaved, onToggleSaved }: MealCardProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -18,13 +21,13 @@ export function MealCard({ meal, isSaved, onToggleSaved }: MealCardProps) {
         </View>
 
         <View style={styles.titleBlock}>
-          <Text style={styles.name}>{meal.name}</Text>
-          <Text style={styles.secondary}>{meal.cuisine}</Text>
-          <Text style={styles.venue}>{meal.venue}</Text>
+          <Text style={styles.name}>{t(meal.nameKey)}</Text>
+          <Text style={styles.secondary}>{t(meal.cuisineKey)}</Text>
+          <Text style={styles.venue}>{t(meal.venueKey)}</Text>
         </View>
 
         <Pressable
-          accessibilityLabel={isSaved ? 'Remove from saved meals' : 'Save meal'}
+          accessibilityLabel={t(isSaved ? 'meal.remove' : 'meal.save')}
           accessibilityRole="button"
           hitSlop={10}
           onPress={() => onToggleSaved(meal)}
@@ -36,10 +39,12 @@ export function MealCard({ meal, isSaved, onToggleSaved }: MealCardProps) {
         </Pressable>
       </View>
 
-      <Text style={styles.reason}>{meal.matchReason}</Text>
+      <Text style={styles.reason}>{t(meal.matchReasonKey)}</Text>
 
       <View style={styles.metaRow}>
-        <Text style={styles.secondary}>↗ {meal.distanceText}</Text>
+        <Text style={styles.secondary}>
+          ↗ {t('meal.distance', { minutes: meal.distanceMinutes })}
+        </Text>
         <Text style={styles.price}>{meal.priceText}</Text>
       </View>
     </View>

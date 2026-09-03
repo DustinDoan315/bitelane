@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { colors, spacing } from '../theme';
 
@@ -7,19 +8,19 @@ type OnboardingScreenProps = {
 };
 
 export function OnboardingScreen({ onContinue }: OnboardingScreenProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.screen}>
       <View style={styles.hero}>
         <Text style={styles.logo}>🍴</Text>
         <Text style={styles.title}>BiteLane</Text>
-        <Text style={styles.subtitle}>Your next meal, already on the way.</Text>
-        <Text style={styles.body}>
-          Find food that fits your route, budget, and mood without wasting time deciding.
-        </Text>
+        <Text style={styles.subtitle}>{t('onboarding.subtitle')}</Text>
+        <Text style={styles.body}>{t('onboarding.body')}</Text>
       </View>
 
       <Pressable accessibilityRole="button" onPress={onContinue} style={styles.button}>
-        <Text style={styles.buttonText}>Start exploring</Text>
+        <Text style={styles.buttonText}>{t('onboarding.cta')}</Text>
       </Pressable>
     </View>
   );

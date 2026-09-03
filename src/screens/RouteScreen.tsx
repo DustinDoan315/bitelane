@@ -1,4 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { colors, spacing } from '../theme';
 import { Budget, RoutePreferences } from '../types';
@@ -12,30 +13,29 @@ type RouteScreenProps = {
   ) => void;
 };
 
-const budgetOptions: Array<{ value: Budget; label: string }> = [
-  { value: 'any', label: 'Any budget' },
-  { value: 'value', label: 'Good value' },
-  { value: 'premium', label: 'Premium' },
+const budgetOptions: Array<{ value: Budget; labelKey: string }> = [
+  { value: 'any', labelKey: 'route.budgets.any' },
+  { value: 'value', labelKey: 'route.budgets.value' },
+  { value: 'premium', labelKey: 'route.budgets.premium' },
 ];
 
 export function RouteScreen({ preferences, onApply, onChange }: RouteScreenProps) {
+  const { t } = useTranslation();
   const hasRoute = Boolean(preferences.origin.trim() && preferences.destination.trim());
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.headingBlock}>
-        <Text style={styles.title}>Your route</Text>
-        <Text style={styles.subtitle}>
-          Tell us where you are going and we will find food along the way.
-        </Text>
+        <Text style={styles.title}>{t('route.title')}</Text>
+        <Text style={styles.subtitle}>{t('route.subtitle')}</Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Locations</Text>
+        <Text style={styles.sectionTitle}>{t('route.locations')}</Text>
         <TextInput
           autoCapitalize="words"
           onChangeText={(value) => onChange('origin', value)}
-          placeholder="Starting point"
+          placeholder={t('route.originPlaceholder')}
           placeholderTextColor={colors.secondaryText}
           style={styles.input}
           value={preferences.origin}
@@ -43,7 +43,7 @@ export function RouteScreen({ preferences, onApply, onChange }: RouteScreenProps
         <TextInput
           autoCapitalize="words"
           onChangeText={(value) => onChange('destination', value)}
-          placeholder="Destination"
+          placeholder={t('route.destinationPlaceholder')}
           placeholderTextColor={colors.secondaryText}
           style={styles.input}
           value={preferences.destination}
@@ -51,8 +51,8 @@ export function RouteScreen({ preferences, onApply, onChange }: RouteScreenProps
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
-        <Text style={styles.label}>Budget</Text>
+        <Text style={styles.sectionTitle}>{t('route.preferences')}</Text>
+        <Text style={styles.label}>{t('route.budget')}</Text>
         <View style={styles.options}>
           {budgetOptions.map((option) => {
             const isSelected = preferences.budget === option.value;
@@ -66,7 +66,7 @@ export function RouteScreen({ preferences, onApply, onChange }: RouteScreenProps
                 style={[styles.option, isSelected && styles.optionSelected]}
               >
                 <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </Text>
               </Pressable>
             );
@@ -74,7 +74,7 @@ export function RouteScreen({ preferences, onApply, onChange }: RouteScreenProps
         </View>
         <TextInput
           onChangeText={(value) => onChange('mood', value)}
-          placeholder="Mood (optional)"
+          placeholder={t('route.moodPlaceholder')}
           placeholderTextColor={colors.secondaryText}
           style={styles.input}
           value={preferences.mood}
@@ -87,7 +87,7 @@ export function RouteScreen({ preferences, onApply, onChange }: RouteScreenProps
         onPress={onApply}
         style={[styles.button, !hasRoute && styles.buttonDisabled]}
       >
-        <Text style={styles.buttonText}>Update recommendations</Text>
+        <Text style={styles.buttonText}>{t('route.update')}</Text>
       </Pressable>
     </ScrollView>
   );
