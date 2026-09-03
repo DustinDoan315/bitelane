@@ -49,6 +49,8 @@ export type Meal = {
 
 export type CommutePreferences = {
   homeAddress: string;
+  homeCoordinate?: Coordinate;
   workAddress: string;
+  workCoordinate?: Coordinate;
   mode: CommuteMode;
 };

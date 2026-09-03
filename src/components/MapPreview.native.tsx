@@ -38,7 +38,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
     if (coordinates.length > 1) {
       mapRef.current?.fitToCoordinates(coordinates, {
         animated: false,
-        edgePadding: { top: 42, right: 42, bottom: 42, left: 42 },
+        edgePadding: { top: fullScreen ? 78 : 42, right: 42, bottom: fullScreen ? 220 : 42, left: 42 },
       });
     }
   };
@@ -61,7 +61,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
         toolbarEnabled={false}
         zoomEnabled
       >
-        <Polyline coordinates={coordinates} strokeColor={live ? colors.accent : colors.secondaryText} strokeWidth={5} />
+        {live ? <Polyline coordinates={coordinates} strokeColor={colors.accent} strokeWidth={5} /> : null}
         <Marker coordinate={start} pinColor={colors.forest} />
         <Marker coordinate={end} pinColor={colors.accent} />
       </MapView>

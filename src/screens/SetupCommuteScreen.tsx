@@ -7,10 +7,10 @@ import { Icon } from '../components/Icon';
 import { MapPreview } from '../components/MapPreview';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { searchAddresses } from '../services/routeService';
+import { getKnownAddressCoordinate, searchAddresses } from '../services/routeService';
 import { colors, spacing } from '../theme';
 import type { AddressSuggestion } from '../services/routeService';
-import type { CommuteMode, CommutePreferences, RouteData } from '../types';
+import type { CommuteMode, CommutePreferences, Coordinate, RouteData } from '../types';
 
 type SetupCommuteScreenProps = {
   preferences: CommutePreferences;
@@ -45,6 +45,13 @@ export function SetupCommuteScreen({
     homeAddress: preferences.homeAddress,
     workAddress: preferences.workAddress,
   });
+  const [draftCoordinates, setDraftCoordinates] = useState<{
+    homeAddress?: Coordinate;
+    workAddress?: Coordinate;
+  }>({
+    homeAddress: preferences.homeCoordinate,
+    workAddress: preferences.workCoordinate,
+  });
   const [activeField, setActiveField] = useState<AddressKey | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [remoteSuggestions, setRemoteSuggestions] = useState<AddressSuggestion[]>([]);
@@ -52,15 +59,16 @@ export function SetupCommuteScreen({
 
   useEffect(() => {
     setDrafts({ homeAddress: preferences.homeAddress, workAddress: preferences.workAddress });
-  }, [preferences.homeAddress, preferences.workAddress]);
+    setDraftCoordinates({ homeAddress: preferences.homeCoordinate, workAddress: preferences.workCoordinate });
+  }, [preferences.homeAddress, preferences.homeCoordinate, preferences.workAddress, preferences.workCoordinate]);
 
   const staticSuggestions: Record<AddressKey, AddressSuggestion[]> = {
     homeAddress: [
-      { id: 'home-default', label: t('commute.homeAddress') },
+      { coordinate: getKnownAddressCoordinate(t('commute.homeAddress')), id: 'home-default', label: t('commute.homeAddress') },
       { id: 'home-suggestion', label: t('commute.homeSuggestion') },
     ],
     workAddress: [
-      { id: 'work-default', label: t('commute.workAddress') },
+      { coordinate: getKnownAddressCoordinate(t('commute.workAddress')), id: 'work-default', label: t('commute.workAddress') },
       { id: 'work-suggestion', label: t('commute.workSuggestion') },
     ],
   };
@@ -111,10 +119,18 @@ export function SetupCommuteScreen({
   const updateDraft = (key: AddressKey, value: string) => {
     setValidationError(null);
     setDrafts((current) => ({ ...current, [key]: value }));
+    setDraftCoordinates((current) => ({
+      ...current,
+      [key]: undefined,
+    }));
   };
 
-  const selectSuggestion = (key: AddressKey, value: string) => {
-    updateDraft(key, value);
+  const selectSuggestion = (key: AddressKey, suggestion: AddressSuggestion) => {
+    updateDraft(key, suggestion.label);
+    setDraftCoordinates((current) => ({
+      ...current,
+      [key]: suggestion.coordinate,
+    }));
     setActiveField(null);
     Keyboard.dismiss();
   };
@@ -130,7 +146,13 @@ export function SetupCommuteScreen({
 
     setActiveField(null);
     Keyboard.dismiss();
-    void onSave({ ...preferences, homeAddress, workAddress });
+    void onSave({
+      ...preferences,
+      homeAddress,
+      homeCoordinate: draftCoordinates.homeAddress,
+      workAddress,
+      workCoordinate: draftCoordinates.workAddress,
+    });
   };
 
   return (
@@ -162,7 +184,7 @@ export function SetupCommuteScreen({
             suggestions={activeField === 'homeAddress' ? visibleSuggestions : staticSuggestions.homeAddress}
             value={drafts.homeAddress}
             accent={colors.forest}
-            onSelectSuggestion={(value) => selectSuggestion('homeAddress', value)}
+            onSelectSuggestion={(suggestion) => selectSuggestion('homeAddress', suggestion)}
             isSearching={activeField === 'homeAddress' && isSearching}
           />
           <AddressField
@@ -177,7 +199,7 @@ export function SetupCommuteScreen({
             suggestions={activeField === 'workAddress' ? visibleSuggestions : staticSuggestions.workAddress}
             value={drafts.workAddress}
             accent={colors.accent}
-            onSelectSuggestion={(value) => selectSuggestion('workAddress', value)}
+            onSelectSuggestion={(suggestion) => selectSuggestion('workAddress', suggestion)}
             isSearching={activeField === 'workAddress' && isSearching}
           />
         </View>
@@ -224,7 +246,7 @@ type AddressFieldProps = {
   labelKey: string;
   onChangeText: (value: string) => void;
   onFocus: () => void;
-  onSelectSuggestion: (value: string) => void;
+  onSelectSuggestion: (suggestion: AddressSuggestion) => void;
   onSubmitEditing: () => void;
   placeholder: string;
   returnKeyType: 'done' | 'next';
@@ -304,7 +326,7 @@ function AddressField({
               accessibilityRole="button"
               accessibilityLabel={suggestion.label}
               key={suggestion.id}
-              onPress={() => onSelectSuggestion(suggestion.label)}
+              onPress={() => onSelectSuggestion(suggestion)}
               style={styles.suggestion}
             >
               <Icon color={colors.forest} name="map-marker-outline" size={18} />

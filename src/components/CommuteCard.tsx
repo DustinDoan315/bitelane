@@ -13,9 +13,9 @@ type CommuteCardProps = {
 
 export function CommuteCard({ isLoading = false, mode, route }: CommuteCardProps) {
   const { t } = useTranslation();
-  const routeMeta = route
+  const routeMeta = route?.source === 'live'
     ? `${t(`commute.${mode}`)} · ${Math.max(1, Math.round(route.durationSeconds / 60))} min · ${(route.distanceMeters / 1000).toFixed(1)} km`
-    : t('home.routeMeta');
+    : t('commute.routeUnavailableMeta');
   const statusLabel = isLoading
     ? t('commute.updatingRoute')
     : route?.source === 'live'

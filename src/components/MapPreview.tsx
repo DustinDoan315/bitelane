@@ -109,7 +109,7 @@ function WebMap({ coordinates, fullScreen, live, mapType }: { coordinates: Coord
     const map = mapRef.current;
     const leaflet = leafletRef.current;
 
-    if (!isReady || !map || !leaflet || coordinates.length < 2) {
+    if (!isReady || !map || !leaflet) {
       return;
     }
 
@@ -119,26 +119,32 @@ function WebMap({ coordinates, fullScreen, live, mapType }: { coordinates: Coord
     endRef.current?.removeFrom(map);
 
     const latLngs = coordinates.map(({ latitude, longitude }) => [latitude, longitude] as [number, number]);
-    const routeColor = live ? colors.accent : colors.secondaryText;
 
-    glowRef.current = leaflet
-      .polyline(latLngs, {
-        color: colors.white,
-        lineCap: 'round',
-        lineJoin: 'round',
-        opacity: 0.92,
-        weight: fullScreen ? 9 : 7,
-      })
-      .addTo(map);
-    routeRef.current = leaflet
-      .polyline(latLngs, {
-        color: routeColor,
-        lineCap: 'round',
-        lineJoin: 'round',
-        opacity: live ? 1 : 0.82,
-        weight: fullScreen ? 5 : 4,
-      })
-      .addTo(map);
+    if (latLngs.length < 2) {
+      return;
+    }
+
+    if (live) {
+      glowRef.current = leaflet
+        .polyline(latLngs, {
+          color: colors.white,
+          lineCap: 'round',
+          lineJoin: 'round',
+          opacity: 0.92,
+          weight: fullScreen ? 9 : 7,
+        })
+        .addTo(map);
+      routeRef.current = leaflet
+        .polyline(latLngs, {
+          color: colors.accent,
+          lineCap: 'round',
+          lineJoin: 'round',
+          opacity: 1,
+          weight: fullScreen ? 5 : 4,
+        })
+        .addTo(map);
+    }
+
     startRef.current = leaflet
       .circleMarker(latLngs[0], {
         color: colors.forest,

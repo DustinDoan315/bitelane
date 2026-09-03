@@ -23,9 +23,9 @@ export function RouteMapScreen({ commute, error, isLoading = false, onBack, onRe
   const { t } = useTranslation();
   const [mapType, setMapType] = useState<MapType>('standard');
   const [isMapFilterOpen, setIsMapFilterOpen] = useState(false);
-  const routeMeta = route
+  const routeMeta = route?.source === 'live'
     ? `${t(`commute.${commute.mode}`)} · ${Math.max(1, Math.round(route.durationSeconds / 60))} min · ${(route.distanceMeters / 1000).toFixed(1)} km`
-    : t('home.routeMeta');
+    : t('commute.routeUnavailableMeta');
 
   return (
     <View style={styles.screen}>

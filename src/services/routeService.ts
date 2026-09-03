@@ -11,6 +11,10 @@ const knownLocations: Record<string, Coordinate> = {
   '18 nguyen dinh chieu quan 3': defaultWork,
 };
 
+export function getKnownAddressCoordinate(address: string): Coordinate | undefined {
+  return knownLocations[normalizeAddress(address)];
+}
+
 type NominatimResult = { lat?: string; lon?: string };
 
 export type AddressSuggestion = {
@@ -123,15 +127,11 @@ function toCoordinates(value: unknown): Coordinate[] {
 }
 
 export function getFallbackRoute(preferences: CommutePreferences): RouteData {
-  const origin = knownLocations[normalizeAddress(preferences.homeAddress)] ?? defaultHome;
-  const destination = knownLocations[normalizeAddress(preferences.workAddress)] ?? defaultWork;
-  const midpoint: Coordinate = {
-    latitude: (origin.latitude + destination.latitude) / 2 + 0.002,
-    longitude: (origin.longitude + destination.longitude) / 2 - 0.001,
-  };
+  const origin = preferences.homeCoordinate ?? getKnownAddressCoordinate(preferences.homeAddress) ?? defaultHome;
+  const destination = preferences.workCoordinate ?? getKnownAddressCoordinate(preferences.workAddress) ?? defaultWork;
 
   return {
-    coordinates: [origin, midpoint, destination],
+    coordinates: [origin, destination],
     distanceMeters: 9074,
     durationSeconds: 632,
     source: 'fallback',
@@ -140,8 +140,8 @@ export function getFallbackRoute(preferences: CommutePreferences): RouteData {
 
 export async function getCommuteRoute(preferences: CommutePreferences): Promise<RouteData> {
   const [origin, destination] = await Promise.all([
-    resolveAddress(preferences.homeAddress),
-    resolveAddress(preferences.workAddress),
+    preferences.homeCoordinate ?? resolveAddress(preferences.homeAddress),
+    preferences.workCoordinate ?? resolveAddress(preferences.workAddress),
   ]);
 
   if (!origin || !destination) {
