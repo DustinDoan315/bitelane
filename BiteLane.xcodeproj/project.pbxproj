@@ -1,0 +1,641 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		09FF4A5F2DCB1B86060F7173 /* SavedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EED7859C8EA2A4A925D81F4E /* SavedView.swift */; };
+		0DFFF7295710AD1EEB50E638 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7B29306CB52660E032BD49D /* Foundation.framework */; };
+		1B8A1886F9505D870A9EF471 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7B29306CB52660E032BD49D /* Foundation.framework */; };
+		220C68662B0874A47C258753 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5350D257F9174B8C847DB56D /* ProfileView.swift */; };
+		28B7DA39FB7E9391FF646323 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A5D1210B26044F2B7C98F9 /* RootView.swift */; };
+		2BA7BE8FBBDB6F03C681ED6F /* RecommendationProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE65766B22A8AC7E5BF734 /* RecommendationProviding.swift */; };
+		383353D32525F9A7804B6792 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 3A3F136163A054D3A7462D50 /* Localizable.xcstrings */; };
+		42A6C6D068220DA43CC81EE0 /* BiteLaneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CD0AE8B9CB38B3999EE05F3 /* BiteLaneApp.swift */; };
+		50F656D30ADC656C57C4F29C /* MealCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B98520837BE6385C9E035892 /* MealCard.swift */; };
+		6502E03D0C1DFE65EA931F5C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B04DB0956C7797AC11B34AF8 /* Assets.xcassets */; };
+		72DE8FFF42E7DB35ACE134D7 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B20CC4FD80B1BE850F01540 /* OnboardingView.swift */; };
+		76D0638DFAB6D943BEFDCFBE /* RouteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 272DE9DE645FBEC418DD26BB /* RouteView.swift */; };
+		7D1F04EBA4C6487685A5E35D /* Meal.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD94C1EE8275A6DBB4D30DF8 /* Meal.swift */; };
+		7D313FE57E50A4F0CEDD2FB3 /* MockRecommendationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B6D5BF3D8F95559B0132133 /* MockRecommendationServiceTests.swift */; };
+		8B11DD47BBF09C4D3C09AF5A /* Budget.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCBCDA54EB5307A9E6E790BF /* Budget.swift */; };
+		9EF0176818026DE357466FE3 /* RoutePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C4FB9176E9E6C33BDEFEC4D /* RoutePreferences.swift */; };
+		A712211BADFE4FB303245E65 /* MockRecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC17A2E9C3BB3DA343255C5D /* MockRecommendationService.swift */; };
+		AD91317446D099FFC045C03E /* AppTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28039616C4C25A1F41EF1F0C /* AppTab.swift */; };
+		D56D99EDEDFDAAF3A5AD85C9 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB6AEFA3D96DF2A37FC59370 /* AppStore.swift */; };
+		D9133ADC85C9EFA0595E0166 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 521FE3CC7A58123CEC303302 /* DiscoverView.swift */; };
+		DBBD1143374F7FF87D7CD4B0 /* BiteLaneTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95BD90B68A5448243BC80786 /* BiteLaneTheme.swift */; };
+		E1A19D35798077B67334B3E0 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03442F816C6D645D946434C3 /* EmptyStateView.swift */; };
+		FCA3D96FBFBD2567810CD005 /* RouteSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FB1690DD2F8BFCF3126090 /* RouteSummaryCard.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6C38221CE0B77C5786EB88D7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0FAEF4FE641E843C88523C43 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 69C9EEB0F25ED4FF547BBE25;
+			remoteInfo = BiteLane;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		03442F816C6D645D946434C3 /* EmptyStateView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
+		18FB1690DD2F8BFCF3126090 /* RouteSummaryCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RouteSummaryCard.swift; sourceTree = "<group>"; };
+		272DE9DE645FBEC418DD26BB /* RouteView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RouteView.swift; sourceTree = "<group>"; };
+		28039616C4C25A1F41EF1F0C /* AppTab.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppTab.swift; sourceTree = "<group>"; };
+		29A5D1210B26044F2B7C98F9 /* RootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		2DD39C217C7AA1333F9C711A /* BiteLane.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BiteLane.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3A3F136163A054D3A7462D50 /* Localizable.xcstrings */ = {isa = PBXFileReference; includeInIndex = 1; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		4B20CC4FD80B1BE850F01540 /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		521FE3CC7A58123CEC303302 /* DiscoverView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
+		5350D257F9174B8C847DB56D /* ProfileView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		5B6D5BF3D8F95559B0132133 /* MockRecommendationServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MockRecommendationServiceTests.swift; sourceTree = "<group>"; };
+		5BFE65766B22A8AC7E5BF734 /* RecommendationProviding.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RecommendationProviding.swift; sourceTree = "<group>"; };
+		6CD0AE8B9CB38B3999EE05F3 /* BiteLaneApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BiteLaneApp.swift; sourceTree = "<group>"; };
+		95BD90B68A5448243BC80786 /* BiteLaneTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BiteLaneTheme.swift; sourceTree = "<group>"; };
+		9C4FB9176E9E6C33BDEFEC4D /* RoutePreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RoutePreferences.swift; sourceTree = "<group>"; };
+		AD94C1EE8275A6DBB4D30DF8 /* Meal.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Meal.swift; sourceTree = "<group>"; };
+		B04DB0956C7797AC11B34AF8 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B98520837BE6385C9E035892 /* MealCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MealCard.swift; sourceTree = "<group>"; };
+		BC17A2E9C3BB3DA343255C5D /* MockRecommendationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MockRecommendationService.swift; sourceTree = "<group>"; };
+		C7B29306CB52660E032BD49D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		DCBCDA54EB5307A9E6E790BF /* Budget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Budget.swift; sourceTree = "<group>"; };
+		EED7859C8EA2A4A925D81F4E /* SavedView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SavedView.swift; sourceTree = "<group>"; };
+		F1E1A73A40BF5CB7AEDD9067 /* BiteLaneTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BiteLaneTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB6AEFA3D96DF2A37FC59370 /* AppStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4E8B0BEB8F980D7C2818A11C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1B8A1886F9505D870A9EF471 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74E2A9BEB5DF295E33D42C95 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0DFFF7295710AD1EEB50E638 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		098AD57EC9BAD9C45CA52E6E /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				C7B29306CB52660E032BD49D /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		4BA112BA4DDD0C8008FC9047 /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				FB6AEFA3D96DF2A37FC59370 /* AppStore.swift */,
+			);
+			name = Store;
+			path = Store;
+			sourceTree = "<group>";
+		};
+		67C750BEA712C0B86D91EC89 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				5350D257F9174B8C847DB56D /* ProfileView.swift */,
+			);
+			name = Profile;
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		6A2A69921DF34555D321E62B /* Discover */ = {
+			isa = PBXGroup;
+			children = (
+				521FE3CC7A58123CEC303302 /* DiscoverView.swift */,
+			);
+			name = Discover;
+			path = Discover;
+			sourceTree = "<group>";
+		};
+		7414B17B94A8E828CFA80ADC /* SharedUI */ = {
+			isa = PBXGroup;
+			children = (
+				03442F816C6D645D946434C3 /* EmptyStateView.swift */,
+				B98520837BE6385C9E035892 /* MealCard.swift */,
+				18FB1690DD2F8BFCF3126090 /* RouteSummaryCard.swift */,
+			);
+			name = SharedUI;
+			path = SharedUI;
+			sourceTree = "<group>";
+		};
+		7427C23519533F6BF11B2386 /* BiteLaneTests */ = {
+			isa = PBXGroup;
+			children = (
+				5B6D5BF3D8F95559B0132133 /* MockRecommendationServiceTests.swift */,
+			);
+			name = BiteLaneTests;
+			path = BiteLaneTests;
+			sourceTree = "<group>";
+		};
+		77CBF334D109F8F2AA36819E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2DD39C217C7AA1333F9C711A /* BiteLane.app */,
+				F1E1A73A40BF5CB7AEDD9067 /* BiteLaneTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7B71EFFB5FC898ADF0507616 /* Saved */ = {
+			isa = PBXGroup;
+			children = (
+				EED7859C8EA2A4A925D81F4E /* SavedView.swift */,
+			);
+			name = Saved;
+			path = Saved;
+			sourceTree = "<group>";
+		};
+		7EEC25E4CD94290BC98F918B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				098AD57EC9BAD9C45CA52E6E /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		7EFC377096B32126F60D5E42 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				95BD90B68A5448243BC80786 /* BiteLaneTheme.swift */,
+			);
+			name = DesignSystem;
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		7F8B8EC886AB5B844EFB6CA5 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				6A2A69921DF34555D321E62B /* Discover */,
+				F4FBF0B38B57C84366CD215E /* Onboarding */,
+				67C750BEA712C0B86D91EC89 /* Profile */,
+				DF41938C779EFD2CF9C647A2 /* Route */,
+				7B71EFFB5FC898ADF0507616 /* Saved */,
+			);
+			name = Features;
+			path = Features;
+			sourceTree = "<group>";
+		};
+		91FF08F65742EF74A1E5B2E3 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B04DB0956C7797AC11B34AF8 /* Assets.xcassets */,
+				3A3F136163A054D3A7462D50 /* Localizable.xcstrings */,
+			);
+			name = Resources;
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A307B4D08466B5A044888458 = {
+			isa = PBXGroup;
+			children = (
+				77CBF334D109F8F2AA36819E /* Products */,
+				7EEC25E4CD94290BC98F918B /* Frameworks */,
+				FEAA2F506DFFD355F40603CC /* BiteLane */,
+				7427C23519533F6BF11B2386 /* BiteLaneTests */,
+			);
+			sourceTree = "<group>";
+		};
+		C8E8F6087EA02904112B8F69 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				DCBCDA54EB5307A9E6E790BF /* Budget.swift */,
+				AD94C1EE8275A6DBB4D30DF8 /* Meal.swift */,
+				9C4FB9176E9E6C33BDEFEC4D /* RoutePreferences.swift */,
+			);
+			name = Models;
+			path = Models;
+			sourceTree = "<group>";
+		};
+		DB3105E465E9BCAFB51F4C5B /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				C8E8F6087EA02904112B8F69 /* Models */,
+				E40BB2E789935219E6DB340C /* Services */,
+				4BA112BA4DDD0C8008FC9047 /* Store */,
+			);
+			name = Core;
+			path = Core;
+			sourceTree = "<group>";
+		};
+		DF41938C779EFD2CF9C647A2 /* Route */ = {
+			isa = PBXGroup;
+			children = (
+				272DE9DE645FBEC418DD26BB /* RouteView.swift */,
+			);
+			name = Route;
+			path = Route;
+			sourceTree = "<group>";
+		};
+		E40BB2E789935219E6DB340C /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				BC17A2E9C3BB3DA343255C5D /* MockRecommendationService.swift */,
+				5BFE65766B22A8AC7E5BF734 /* RecommendationProviding.swift */,
+			);
+			name = Services;
+			path = Services;
+			sourceTree = "<group>";
+		};
+		ECCCA8E74D15A81875E7E298 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				28039616C4C25A1F41EF1F0C /* AppTab.swift */,
+				6CD0AE8B9CB38B3999EE05F3 /* BiteLaneApp.swift */,
+				29A5D1210B26044F2B7C98F9 /* RootView.swift */,
+			);
+			name = App;
+			path = App;
+			sourceTree = "<group>";
+		};
+		F4FBF0B38B57C84366CD215E /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				4B20CC4FD80B1BE850F01540 /* OnboardingView.swift */,
+			);
+			name = Onboarding;
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		FEAA2F506DFFD355F40603CC /* BiteLane */ = {
+			isa = PBXGroup;
+			children = (
+				ECCCA8E74D15A81875E7E298 /* App */,
+				DB3105E465E9BCAFB51F4C5B /* Core */,
+				7EFC377096B32126F60D5E42 /* DesignSystem */,
+				7F8B8EC886AB5B844EFB6CA5 /* Features */,
+				7414B17B94A8E828CFA80ADC /* SharedUI */,
+				91FF08F65742EF74A1E5B2E3 /* Resources */,
+			);
+			name = BiteLane;
+			path = BiteLane;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		40B035E6B5D6A6AC7827047E /* BiteLaneTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 209F53F29B6FCBB2BB819944 /* Build configuration list for PBXNativeTarget "BiteLaneTests" */;
+			buildPhases = (
+				15781E8F31C2262F0801F58D /* Sources */,
+				74E2A9BEB5DF295E33D42C95 /* Frameworks */,
+				E54CB00BAA8DADFD7F3C00F4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ECAD060153C8EB0C689F78BA /* PBXTargetDependency */,
+			);
+			name = BiteLaneTests;
+			productName = BiteLaneTests;
+			productReference = F1E1A73A40BF5CB7AEDD9067 /* BiteLaneTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		69C9EEB0F25ED4FF547BBE25 /* BiteLane */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7FBECAC14459C5D090BF8A2F /* Build configuration list for PBXNativeTarget "BiteLane" */;
+			buildPhases = (
+				521821737933C00EB2DBD99B /* Sources */,
+				4E8B0BEB8F980D7C2818A11C /* Frameworks */,
+				B4BEBC9E06AC632FD172FC59 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BiteLane;
+			productName = BiteLane;
+			productReference = 2DD39C217C7AA1333F9C711A /* BiteLane.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0FAEF4FE641E843C88523C43 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 2600;
+			};
+		buildConfigurationList = AF65A959DC77EA61C3411B22 /* Build configuration list for PBXProject "BiteLane" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A307B4D08466B5A044888458;
+			minimizedProjectReferenceProxies = 0;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 77CBF334D109F8F2AA36819E /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				69C9EEB0F25ED4FF547BBE25 /* BiteLane */,
+				40B035E6B5D6A6AC7827047E /* BiteLaneTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B4BEBC9E06AC632FD172FC59 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6502E03D0C1DFE65EA931F5C /* Assets.xcassets in Resources */,
+				383353D32525F9A7804B6792 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E54CB00BAA8DADFD7F3C00F4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		15781E8F31C2262F0801F58D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7D313FE57E50A4F0CEDD2FB3 /* MockRecommendationServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		521821737933C00EB2DBD99B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AD91317446D099FFC045C03E /* AppTab.swift in Sources */,
+				42A6C6D068220DA43CC81EE0 /* BiteLaneApp.swift in Sources */,
+				28B7DA39FB7E9391FF646323 /* RootView.swift in Sources */,
+				8B11DD47BBF09C4D3C09AF5A /* Budget.swift in Sources */,
+				7D1F04EBA4C6487685A5E35D /* Meal.swift in Sources */,
+				9EF0176818026DE357466FE3 /* RoutePreferences.swift in Sources */,
+				A712211BADFE4FB303245E65 /* MockRecommendationService.swift in Sources */,
+				2BA7BE8FBBDB6F03C681ED6F /* RecommendationProviding.swift in Sources */,
+				D56D99EDEDFDAAF3A5AD85C9 /* AppStore.swift in Sources */,
+				DBBD1143374F7FF87D7CD4B0 /* BiteLaneTheme.swift in Sources */,
+				D9133ADC85C9EFA0595E0166 /* DiscoverView.swift in Sources */,
+				72DE8FFF42E7DB35ACE134D7 /* OnboardingView.swift in Sources */,
+				220C68662B0874A47C258753 /* ProfileView.swift in Sources */,
+				76D0638DFAB6D943BEFDCFBE /* RouteView.swift in Sources */,
+				09FF4A5F2DCB1B86060F7173 /* SavedView.swift in Sources */,
+				E1A19D35798077B67334B3E0 /* EmptyStateView.swift in Sources */,
+				50F656D30ADC656C57C4F29C /* MealCard.swift in Sources */,
+				FCA3D96FBFBD2567810CD005 /* RouteSummaryCard.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		ECAD060153C8EB0C689F78BA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = BiteLane;
+			target = 69C9EEB0F25ED4FF547BBE25 /* BiteLane */;
+			targetProxy = 6C38221CE0B77C5786EB88D7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		157EA2E9F0A0F36656DF4678 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		485005334F88ACB069A1986E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = BiteLane;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.bitelane.app;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		537F2A6FB70467E726F69F28 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bitelane.tests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BiteLane.app/BiteLane";
+			};
+			name = Debug;
+		};
+		924F8D71C87445D2C5E6028B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		BFF515380D280B14AD2D5643 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = BiteLane;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.bitelane.app;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F0F36AFB016B4B8AE57AEA42 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bitelane.tests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BiteLane.app/BiteLane";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		209F53F29B6FCBB2BB819944 /* Build configuration list for PBXNativeTarget "BiteLaneTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F0F36AFB016B4B8AE57AEA42 /* Release */,
+				537F2A6FB70467E726F69F28 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7FBECAC14459C5D090BF8A2F /* Build configuration list for PBXNativeTarget "BiteLane" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				485005334F88ACB069A1986E /* Release */,
+				BFF515380D280B14AD2D5643 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF65A959DC77EA61C3411B22 /* Build configuration list for PBXProject "BiteLaneGenerated4" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				924F8D71C87445D2C5E6028B /* Debug */,
+				157EA2E9F0A0F36656DF4678 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0FAEF4FE641E843C88523C43 /* Project object */;
+}
