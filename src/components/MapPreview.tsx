@@ -1,18 +1,79 @@
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle, Polyline as SvgPolyline } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 
 import { colors } from '../theme';
+import type { RouteData } from '../types';
 
-export function MapPreview() {
+export type MapPreviewProps = {
+  route?: RouteData | null;
+  isLoading?: boolean;
+  error?: string | null;
+};
+
+const fallbackCoordinates = [
+  { latitude: 10.73287, longitude: 106.708003 },
+  { latitude: 10.7395, longitude: 106.704 },
+  { latitude: 10.755, longitude: 106.701 },
+  { latitude: 10.771, longitude: 106.698 },
+  { latitude: 10.7862, longitude: 106.6962 },
+];
+
+function toSvgPoints(coordinates: Array<{ latitude: number; longitude: number }>) {
+  const maxPoints = 120;
+  const step = Math.max(1, Math.ceil(coordinates.length / maxPoints));
+  const sampled = coordinates.filter((_, index) => index % step === 0 || index === coordinates.length - 1);
+  const longitudes = sampled.map((point) => point.longitude);
+  const latitudes = sampled.map((point) => point.latitude);
+  const minLongitude = Math.min(...longitudes);
+  const maxLongitude = Math.max(...longitudes);
+  const minLatitude = Math.min(...latitudes);
+  const maxLatitude = Math.max(...latitudes);
+  const longitudeRange = Math.max(maxLongitude - minLongitude, 0.0001);
+  const latitudeRange = Math.max(maxLatitude - minLatitude, 0.0001);
+
+  return sampled.map((point) => ({
+    x: 8 + ((point.longitude - minLongitude) / longitudeRange) * 84,
+    y: 12 + ((maxLatitude - point.latitude) / latitudeRange) * 76,
+  }));
+}
+
+export function MapPreview({ route, isLoading = false, error }: MapPreviewProps) {
+  const { t } = useTranslation();
+  const live = route?.source === 'live';
+  const coordinates = route?.coordinates.length ? route.coordinates : fallbackCoordinates;
+  const points = toSvgPoints(coordinates);
+  const startPoint = points[0] ?? { x: 8, y: 84 };
+  const endPoint = points[points.length - 1] ?? { x: 92, y: 16 };
+  const statusLabel = isLoading
+    ? t('commute.updatingRoute')
+    : live
+      ? t('commute.liveRoute')
+      : error
+        ? t('commute.routeFallback')
+        : t('commute.routePreview');
+
   return (
     <View style={styles.map}>
       <View style={[styles.road, styles.roadOne]} />
       <View style={[styles.road, styles.roadTwo]} />
       <View style={[styles.road, styles.roadThree]} />
-      <View style={[styles.route, styles.routeOne]} />
-      <View style={[styles.route, styles.routeTwo]} />
-      <View style={[styles.route, styles.routeThree]} />
-      <View style={[styles.pin, styles.startPin]} />
-      <View style={[styles.pin, styles.endPin]} />
+      <Svg height="100%" viewBox="0 0 100 100" width="100%">
+        <SvgPolyline
+          fill="none"
+          points={points.map(({ x, y }) => `${x},${y}`).join(' ')}
+          stroke={live ? colors.accent : colors.secondaryText}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="3"
+        />
+        <Circle cx={startPoint.x} cy={startPoint.y} fill={colors.white} r="3.5" stroke={colors.accent} strokeWidth="1.5" />
+        <Circle cx={endPoint.x} cy={endPoint.y} fill={colors.accent} r="3.5" />
+      </Svg>
+      <View style={styles.statusPill}>
+        {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
+        <Text style={styles.statusText}>{statusLabel}</Text>
+      </View>
     </View>
   );
 }
@@ -48,46 +109,21 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-17deg' }],
     width: 20,
   },
-  route: {
-    backgroundColor: colors.accent,
-    borderRadius: 8,
-    height: 8,
-    position: 'absolute',
-  },
-  routeOne: {
-    left: 38,
-    top: 93,
-    transform: [{ rotate: '-28deg' }],
-    width: 92,
-  },
-  routeTwo: {
-    left: 110,
-    top: 67,
-    transform: [{ rotate: '-12deg' }],
-    width: 85,
-  },
-  routeThree: {
-    left: 178,
-    top: 53,
-    transform: [{ rotate: '5deg' }],
-    width: 112,
-  },
-  pin: {
-    borderColor: colors.accent,
-    borderRadius: 10,
-    borderWidth: 4,
-    height: 17,
-    position: 'absolute',
-    width: 17,
-  },
-  startPin: {
+  statusPill: {
+    alignItems: 'center',
     backgroundColor: colors.white,
-    bottom: 18,
-    left: 28,
+    borderRadius: 12,
+    bottom: 10,
+    flexDirection: 'row',
+    gap: 6,
+    left: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    position: 'absolute',
   },
-  endPin: {
-    backgroundColor: colors.accent,
-    right: 30,
-    top: 25,
+  statusText: {
+    color: colors.forest,
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

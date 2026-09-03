@@ -25,6 +25,7 @@ Postgres (RLS)
 - `src/data/mockRecommendations.ts`: temporary local data boundary.
 - `src/i18n.ts`: device locale detection and English/Vietnamese resources.
 - `src/theme.ts`: shared color and spacing tokens.
+- `src/services/routeService.ts`: typed geocoding/routing boundary with timeout handling and a safe fallback route for offline/error states.
 - `App.tsx`: lightweight state coordinator until navigation and a server state layer are introduced.
 
 ## Recommended next boundaries
@@ -33,3 +34,7 @@ Postgres (RLS)
 2. Add `supabaseClient` and session lifecycle handling.
 3. Add typed API contracts for daily pick, alternatives, route estimates, and feedback events.
 4. Move persistence and provider secrets behind the Edge Function/Postgres boundary.
+
+## Route implementation note
+
+The current prototype calls OpenStreetMap Nominatim for address resolution and OSRM for route geometry so the UI can demonstrate a real polyline without a client-side API key. Native builds render the route with `react-native-maps` and the platform map provider; web renders the same returned geometry as an SVG overlay. Before shipping, proxy both calls through the Supabase Edge Function, add request caching/rate limits, and keep precise addresses out of third-party client requests.

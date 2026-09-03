@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Linking, SafeAreaView, StyleSheet, View } from 'react-native';
 
@@ -14,6 +14,8 @@ import { alternativeMeals, featuredMeal, recentMeals, savedMeals } from './src/d
 import { BottomTabBar } from './src/components/BottomTabBar';
 import type { AppScreen, CommutePreferences, MainTab } from './src/types';
 import { colors } from './src/theme';
+import { getCommuteRoute, getFallbackRoute } from './src/services/routeService';
+import type { RouteData } from './src/types';
 
 const initialCommute: CommutePreferences = {
   homeAddress: '123 Nguyễn Văn Linh, Quận 7',
@@ -26,6 +28,10 @@ export default function App() {
   const [selectedTab, setSelectedTab] = useState<MainTab>('home');
   const [commuteReturnScreen, setCommuteReturnScreen] = useState<'goal' | 'home'>('goal');
   const [commute, setCommute] = useState<CommutePreferences>(initialCommute);
+  const [route, setRoute] = useState<RouteData>(() => getFallbackRoute(initialCommute));
+  const [routeError, setRouteError] = useState<string | null>(null);
+  const [isRouteLoading, setIsRouteLoading] = useState(true);
+  const routeRequestRef = useRef(0);
   const [savedMealIds, setSavedMealIds] = useState<Set<string>>(
     () => new Set(savedMeals.map((meal) => meal.id)),
   );
@@ -65,6 +71,38 @@ export default function App() {
     void i18n.changeLanguage(i18n.resolvedLanguage === 'vi' ? 'en' : 'vi');
   };
 
+  const refreshRoute = async (nextCommute: CommutePreferences) => {
+    const requestId = routeRequestRef.current + 1;
+    routeRequestRef.current = requestId;
+    setIsRouteLoading(true);
+    setRouteError(null);
+
+    try {
+      const nextRoute = await getCommuteRoute(nextCommute);
+
+      if (requestId !== routeRequestRef.current) {
+        return;
+      }
+
+      setRoute(nextRoute);
+    } catch (error) {
+      if (requestId !== routeRequestRef.current) {
+        return;
+      }
+
+      setRoute(getFallbackRoute(nextCommute));
+      setRouteError(error instanceof Error ? error.message : 'Unable to update route.');
+    } finally {
+      if (requestId === routeRequestRef.current) {
+        setIsRouteLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    void refreshRoute(initialCommute);
+  }, []);
+
   if (screen === 'goal') {
     return (
       <SetupGoalScreen
@@ -82,8 +120,15 @@ export default function App() {
       <SetupCommuteScreen
         onBack={() => setScreen(commuteReturnScreen)}
         onChange={updateCommute}
-        onSave={() => setScreen('home')}
+        onSave={async (nextCommute) => {
+          setCommute(nextCommute);
+          await refreshRoute(nextCommute);
+          setScreen('home');
+        }}
         preferences={commute}
+        route={route}
+        routeError={routeError}
+        isSaving={isRouteLoading}
       />
     );
   }
@@ -96,6 +141,7 @@ export default function App() {
         <HomeScreen
           commute={commute}
           featuredMeal={featuredMeal}
+          isRouteLoading={isRouteLoading}
           onEditCommute={() => {
             setCommuteReturnScreen('home');
             setScreen('commute');
@@ -107,6 +153,8 @@ export default function App() {
           }}
           onToggleLanguage={toggleLanguage}
           onTryAnother={() => setScreen('feedback')}
+          route={route}
+          routeError={routeError}
         />
       );
       break;

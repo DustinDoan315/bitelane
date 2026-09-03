@@ -7,7 +7,7 @@ import { Icon } from '../components/Icon';
 import { MapPreview } from '../components/MapPreview';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { colors, spacing } from '../theme';
-import type { CommutePreferences, Meal } from '../types';
+import type { CommutePreferences, Meal, RouteData } from '../types';
 
 type HomeScreenProps = {
   featuredMeal: Meal;
@@ -16,6 +16,9 @@ type HomeScreenProps = {
   onNavigate: () => void;
   onToggleLanguage: () => void;
   onTryAnother: () => void;
+  route?: RouteData | null;
+  routeError?: string | null;
+  isRouteLoading?: boolean;
 };
 
 export function HomeScreen({
@@ -25,6 +28,9 @@ export function HomeScreen({
   onNavigate,
   onToggleLanguage,
   onTryAnother,
+  route,
+  routeError,
+  isRouteLoading = false,
 }: HomeScreenProps) {
   const { t } = useTranslation();
 
@@ -41,10 +47,10 @@ export function HomeScreen({
       </View>
 
       <Pressable accessibilityRole="button" onPress={onEditCommute}>
-        <CommuteCard mode={commute.mode} />
+        <CommuteCard mode={commute.mode} route={route} />
       </Pressable>
 
-      <MapPreview />
+      <MapPreview error={routeError} isLoading={isRouteLoading} route={route} />
 
       <FeaturedMealCard meal={featuredMeal} onPress={onTryAnother} />
 

@@ -10,6 +10,8 @@ Expo React Native foundation for BiteLane: food recommendations that fit a user'
 - Saved/recent food memory screen
 - Feedback and alternative recommendation flows
 - Reusable buttons, rows, banners, map preview, meal cards, and icon wrapper
+- Editable commute fields with clear actions, keyboard-friendly focus, suggestions, and validation
+- Live route fetching through a typed route service, native map rendering on iOS/Android, and an SVG route fallback for web
 - In-memory commute, goal, and saved-meal state
 - English/Vietnamese localization with `i18next`, `react-i18next`, and device locale detection
 
@@ -26,7 +28,7 @@ The initial language follows the device locale (`vi` uses Vietnamese; all other 
 
 ## Architecture boundary
 
-The current recommendation data is mock data behind `src/data/mockRecommendations.ts`. The intended production boundary follows the supplied architecture: the Expo client should hold only a Supabase session token, call a Supabase Edge Function for recommendations, and never contain Google server keys. Routes and places remain external provider concerns behind that backend boundary.
+The current recommendation data is mock data behind `src/data/mockRecommendations.ts`. Route data is fetched by `src/services/routeService.ts` using OpenStreetMap Nominatim + OSRM for this prototype, with a deterministic fallback when the provider is unavailable. Set `EXPO_PUBLIC_GEOCODER_URL` and `EXPO_PUBLIC_ROUTE_URL` to point at your Supabase Edge Function before production; the Expo client should hold only a Supabase session token and never contain Google server keys.
 
 ## Planned next slices
 

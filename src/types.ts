@@ -17,6 +17,18 @@ export type FeedbackReason = 'tooFar' | 'tooExpensive' | 'similar' | 'notForMe';
 
 export type MealIconName = 'food' | 'bowl-mix' | 'baguette';
 
+export type Coordinate = {
+  latitude: number;
+  longitude: number;
+};
+
+export type RouteData = {
+  coordinates: Coordinate[];
+  distanceMeters: number;
+  durationSeconds: number;
+  source: 'live' | 'fallback';
+};
+
 export type Meal = {
   id: string;
   nameKey: string;

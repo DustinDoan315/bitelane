@@ -3,14 +3,18 @@ import { useTranslation } from 'react-i18next';
 
 import { Icon } from './Icon';
 import { colors, spacing } from '../theme';
-import type { CommuteMode } from '../types';
+import type { CommuteMode, RouteData } from '../types';
 
 type CommuteCardProps = {
   mode: CommuteMode;
+  route?: RouteData | null;
 };
 
-export function CommuteCard({ mode }: CommuteCardProps) {
+export function CommuteCard({ mode, route }: CommuteCardProps) {
   const { t } = useTranslation();
+  const routeMeta = route
+    ? `${t(`commute.${mode}`)} · ${Math.max(1, Math.round(route.durationSeconds / 60))} min · ${(route.distanceMeters / 1000).toFixed(1)} km`
+    : t('home.routeMeta');
 
   return (
     <View style={styles.card}>
@@ -19,7 +23,7 @@ export function CommuteCard({ mode }: CommuteCardProps) {
       </View>
       <View style={styles.textBlock}>
         <Text style={styles.title}>{t('home.route')}</Text>
-        <Text style={styles.meta}>{t('home.routeMeta')}</Text>
+        <Text style={styles.meta}>{routeMeta}</Text>
       </View>
       <View style={styles.livePill}>
         <Text style={styles.liveText}>{t('home.live')}</Text>
