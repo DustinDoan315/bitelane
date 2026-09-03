@@ -1,12 +1,14 @@
 import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Icon } from '../components/Icon';
 import { MapPreview } from '../components/MapPreview';
+import { MapTypeFilter } from '../components/MapTypeFilter';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { colors, spacing } from '../theme';
-import type { CommutePreferences, RouteData } from '../types';
+import type { CommutePreferences, MapType, RouteData } from '../types';
 
 type RouteMapScreenProps = {
   commute: CommutePreferences;
@@ -19,6 +21,8 @@ type RouteMapScreenProps = {
 
 export function RouteMapScreen({ commute, error, isLoading = false, onBack, onRetry, route }: RouteMapScreenProps) {
   const { t } = useTranslation();
+  const [mapType, setMapType] = useState<MapType>('standard');
+  const [isMapFilterOpen, setIsMapFilterOpen] = useState(false);
   const routeMeta = route
     ? `${t(`commute.${commute.mode}`)} · ${Math.max(1, Math.round(route.durationSeconds / 60))} min · ${(route.distanceMeters / 1000).toFixed(1)} km`
     : t('home.routeMeta');
@@ -26,18 +30,29 @@ export function RouteMapScreen({ commute, error, isLoading = false, onBack, onRe
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
-      <MapPreview error={error} fullScreen isLoading={isLoading} route={route} />
+      <MapPreview error={error} fullScreen isLoading={isLoading} mapType={mapType} route={route} />
 
       <View pointerEvents="box-none" style={styles.overlay}>
-        <Pressable
-          accessibilityLabel={t('commute.closeMap')}
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={onBack}
-          style={styles.closeButton}
-        >
-          <Icon color={colors.text} name="arrow-left" size={23} />
-        </Pressable>
+        <View style={styles.topRow}>
+          <Pressable
+            accessibilityLabel={t('commute.closeMap')}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={onBack}
+            style={styles.closeButton}
+          >
+            <Icon color={colors.text} name="arrow-left" size={23} />
+          </Pressable>
+          <MapTypeFilter
+            onChange={(nextType) => {
+              setMapType(nextType);
+              setIsMapFilterOpen(false);
+            }}
+            onToggle={() => setIsMapFilterOpen((open) => !open)}
+            open={isMapFilterOpen}
+            value={mapType}
+          />
+        </View>
         <View style={styles.titlePill}>
           <Icon color={colors.forest} name="map-marker-path" size={17} />
           <Text style={styles.title}>{t('commute.fullMapTitle')}</Text>
@@ -67,6 +82,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
+  },
+  topRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   closeButton: {
     alignItems: 'center',

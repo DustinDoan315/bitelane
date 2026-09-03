@@ -30,6 +30,8 @@ export type RouteData = {
   source: 'live' | 'fallback';
 };
 
+export type MapType = 'standard' | 'satellite' | 'hybrid';
+
 export type Meal = {
   id: string;
   nameKey: string;

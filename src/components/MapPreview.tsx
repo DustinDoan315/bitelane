@@ -5,13 +5,14 @@ import 'leaflet/dist/leaflet.css';
 
 import { Icon } from './Icon';
 import { colors } from '../theme';
-import type { Coordinate, RouteData } from '../types';
+import type { Coordinate, MapType, RouteData } from '../types';
 
 export type MapPreviewProps = {
   route?: RouteData | null;
   isLoading?: boolean;
   error?: string | null;
   fullScreen?: boolean;
+  mapType?: MapType;
   onPress?: () => void;
 };
 
@@ -25,7 +26,7 @@ const fallbackCoordinates: Coordinate[] = [
 
 type LeafletModule = typeof import('leaflet');
 
-function WebMap({ coordinates, fullScreen, live }: { coordinates: Coordinate[]; fullScreen: boolean; live: boolean }) {
+function WebMap({ coordinates, fullScreen, live, mapType }: { coordinates: Coordinate[]; fullScreen: boolean; live: boolean; mapType: MapType }) {
   const mapElementRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import('leaflet').Map | null>(null);
   const leafletRef = useRef<LeafletModule | null>(null);
@@ -33,6 +34,7 @@ function WebMap({ coordinates, fullScreen, live }: { coordinates: Coordinate[]; 
   const routeRef = useRef<import('leaflet').Polyline | null>(null);
   const startRef = useRef<import('leaflet').CircleMarker | null>(null);
   const endRef = useRef<import('leaflet').CircleMarker | null>(null);
+  const tileLayersRef = useRef<import('leaflet').TileLayer[]>([]);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -49,13 +51,6 @@ function WebMap({ coordinates, fullScreen, live }: { coordinates: Coordinate[]; 
         scrollWheelZoom: fullScreen,
         zoomControl: false,
       });
-
-      leaflet
-        .tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors',
-          maxZoom: 19,
-        })
-        .addTo(map);
 
       if (fullScreen) {
         leaflet.control.zoom({ position: 'topright' }).addTo(map);
@@ -74,6 +69,41 @@ function WebMap({ coordinates, fullScreen, live }: { coordinates: Coordinate[]; 
       leafletRef.current = null;
     };
   }, [fullScreen]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const leaflet = leafletRef.current;
+
+    if (!isReady || !map || !leaflet) {
+      return;
+    }
+
+    tileLayersRef.current.forEach((layer) => layer.removeFrom(map));
+
+    const imageryLayer = mapType === 'standard'
+      ? leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
+          maxZoom: 19,
+        })
+      : leaflet.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri',
+          maxZoom: 19,
+        });
+
+    tileLayersRef.current = [imageryLayer];
+    imageryLayer.addTo(map);
+
+    if (mapType === 'hybrid') {
+      const labelsLayer = leaflet.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        maxZoom: 20,
+        subdomains: 'abcd',
+      });
+
+      tileLayersRef.current.push(labelsLayer);
+      labelsLayer.addTo(map);
+    }
+  }, [isReady, mapType]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -138,7 +168,7 @@ function WebMap({ coordinates, fullScreen, live }: { coordinates: Coordinate[]; 
   return <div ref={mapElementRef} style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }} />;
 }
 
-export function MapPreview({ route, isLoading = false, error, fullScreen = false, onPress }: MapPreviewProps) {
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, mapType = 'standard', onPress }: MapPreviewProps) {
   const { t } = useTranslation();
   const live = route?.source === 'live';
   const coordinates = useMemo(
@@ -155,7 +185,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
 
   return (
     <View style={[styles.map, fullScreen && styles.fullScreenMap]}>
-      <WebMap coordinates={coordinates} fullScreen={fullScreen} live={live} />
+      <WebMap coordinates={coordinates} fullScreen={fullScreen} live={live} mapType={mapType} />
       {onPress && !fullScreen ? (
         <Pressable
           accessibilityLabel={t('commute.openMap')}

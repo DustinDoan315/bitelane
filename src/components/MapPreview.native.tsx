@@ -16,7 +16,7 @@ const fallbackCoordinates: Coordinate[] = [
   { latitude: 10.7862, longitude: 106.6962 },
 ];
 
-export function MapPreview({ route, isLoading = false, error, fullScreen = false, onPress }: MapPreviewProps) {
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, mapType = 'standard', onPress }: MapPreviewProps) {
   const { t } = useTranslation();
   const mapRef = useRef<MapView>(null);
   const coordinates = useMemo(
@@ -51,7 +51,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
     <View style={[styles.container, fullScreen && styles.fullScreenContainer]}>
       <MapView
         ref={mapRef}
-        mapType="standard"
+        mapType={mapType}
         onMapReady={fitRoute}
         pitchEnabled={false}
         rotateEnabled={false}
