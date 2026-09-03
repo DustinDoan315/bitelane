@@ -1,10 +1,11 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Polyline as SvgPolyline } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
+import 'leaflet/dist/leaflet.css';
 
 import { Icon } from './Icon';
 import { colors } from '../theme';
-import type { RouteData } from '../types';
+import type { Coordinate, RouteData } from '../types';
 
 export type MapPreviewProps = {
   route?: RouteData | null;
@@ -14,7 +15,7 @@ export type MapPreviewProps = {
   onPress?: () => void;
 };
 
-const fallbackCoordinates = [
+const fallbackCoordinates: Coordinate[] = [
   { latitude: 10.73287, longitude: 106.708003 },
   { latitude: 10.7395, longitude: 106.704 },
   { latitude: 10.755, longitude: 106.701 },
@@ -22,34 +23,128 @@ const fallbackCoordinates = [
   { latitude: 10.7862, longitude: 106.6962 },
 ];
 
-function toSvgPoints(coordinates: Array<{ latitude: number; longitude: number }>) {
-  const maxPoints = 120;
-  const step = Math.max(1, Math.ceil(coordinates.length / maxPoints));
-  const sampled = coordinates.filter((_, index) => index % step === 0 || index === coordinates.length - 1);
-  const longitudes = sampled.map((point) => point.longitude);
-  const latitudes = sampled.map((point) => point.latitude);
-  const minLongitude = Math.min(...longitudes);
-  const maxLongitude = Math.max(...longitudes);
-  const minLatitude = Math.min(...latitudes);
-  const maxLatitude = Math.max(...latitudes);
-  const longitudeRange = Math.max(maxLongitude - minLongitude, 0.0001);
-  const latitudeRange = Math.max(maxLatitude - minLatitude, 0.0001);
+type LeafletModule = typeof import('leaflet');
 
-  return sampled.map((point) => ({
-    x: 8 + ((point.longitude - minLongitude) / longitudeRange) * 84,
-    y: 12 + ((maxLatitude - point.latitude) / latitudeRange) * 76,
-  }));
+function WebMap({ coordinates, fullScreen, live }: { coordinates: Coordinate[]; fullScreen: boolean; live: boolean }) {
+  const mapElementRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<import('leaflet').Map | null>(null);
+  const leafletRef = useRef<LeafletModule | null>(null);
+  const glowRef = useRef<import('leaflet').Polyline | null>(null);
+  const routeRef = useRef<import('leaflet').Polyline | null>(null);
+  const startRef = useRef<import('leaflet').CircleMarker | null>(null);
+  const endRef = useRef<import('leaflet').CircleMarker | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void import('leaflet').then((leaflet) => {
+      if (cancelled || !mapElementRef.current) {
+        return;
+      }
+
+      const map = leaflet.map(mapElementRef.current, {
+        attributionControl: true,
+        dragging: fullScreen,
+        scrollWheelZoom: fullScreen,
+        zoomControl: false,
+      });
+
+      leaflet
+        .tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
+          maxZoom: 19,
+        })
+        .addTo(map);
+
+      if (fullScreen) {
+        leaflet.control.zoom({ position: 'topright' }).addTo(map);
+      }
+
+      mapRef.current = map;
+      leafletRef.current = leaflet;
+      setIsReady(true);
+      window.setTimeout(() => map.invalidateSize(), 0);
+    });
+
+    return () => {
+      cancelled = true;
+      mapRef.current?.remove();
+      mapRef.current = null;
+      leafletRef.current = null;
+    };
+  }, [fullScreen]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const leaflet = leafletRef.current;
+
+    if (!isReady || !map || !leaflet || coordinates.length < 2) {
+      return;
+    }
+
+    glowRef.current?.removeFrom(map);
+    routeRef.current?.removeFrom(map);
+    startRef.current?.removeFrom(map);
+    endRef.current?.removeFrom(map);
+
+    const latLngs = coordinates.map(({ latitude, longitude }) => [latitude, longitude] as [number, number]);
+    const routeColor = live ? colors.accent : colors.secondaryText;
+
+    glowRef.current = leaflet
+      .polyline(latLngs, {
+        color: colors.white,
+        lineCap: 'round',
+        lineJoin: 'round',
+        opacity: 0.92,
+        weight: fullScreen ? 9 : 7,
+      })
+      .addTo(map);
+    routeRef.current = leaflet
+      .polyline(latLngs, {
+        color: routeColor,
+        lineCap: 'round',
+        lineJoin: 'round',
+        opacity: live ? 1 : 0.82,
+        weight: fullScreen ? 5 : 4,
+      })
+      .addTo(map);
+    startRef.current = leaflet
+      .circleMarker(latLngs[0], {
+        color: colors.forest,
+        fillColor: colors.white,
+        fillOpacity: 1,
+        radius: fullScreen ? 8 : 6,
+        weight: 3,
+      })
+      .addTo(map);
+    endRef.current = leaflet
+      .circleMarker(latLngs[latLngs.length - 1], {
+        color: colors.white,
+        fillColor: colors.accent,
+        fillOpacity: 1,
+        radius: fullScreen ? 9 : 7,
+        weight: 3,
+      })
+      .addTo(map);
+
+    const bounds = leaflet.latLngBounds(latLngs);
+    map.fitBounds(bounds, {
+      paddingTopLeft: [fullScreen ? 32 : 18, fullScreen ? 58 : 18],
+      paddingBottomRight: [fullScreen ? 32 : 18, fullScreen ? 210 : 18],
+    });
+  }, [coordinates, fullScreen, isReady, live]);
+
+  return <div ref={mapElementRef} style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }} />;
 }
 
 export function MapPreview({ route, isLoading = false, error, fullScreen = false, onPress }: MapPreviewProps) {
   const { t } = useTranslation();
   const live = route?.source === 'live';
-  const coordinates = route?.coordinates.length ? route.coordinates : fallbackCoordinates;
-  const points = toSvgPoints(coordinates);
-  const startPoint = points[0] ?? { x: 8, y: 84 };
-  const endPoint = points[points.length - 1] ?? { x: 92, y: 16 };
-  const routeStrokeWidth = fullScreen ? 1.4 : 3;
-  const markerRadius = fullScreen ? 2.1 : 3.5;
+  const coordinates = useMemo(
+    () => (route?.coordinates.length ? route.coordinates : fallbackCoordinates),
+    [route],
+  );
   const statusLabel = isLoading
     ? t('commute.updatingRoute')
     : live
@@ -60,21 +155,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
 
   return (
     <View style={[styles.map, fullScreen && styles.fullScreenMap]}>
-      <View style={[styles.road, styles.roadOne]} />
-      <View style={[styles.road, styles.roadTwo]} />
-      <View style={[styles.road, styles.roadThree]} />
-      <Svg height="100%" viewBox="0 0 100 100" width="100%">
-        <SvgPolyline
-          fill="none"
-          points={points.map(({ x, y }) => `${x},${y}`).join(' ')}
-          stroke={live ? colors.accent : colors.secondaryText}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={routeStrokeWidth}
-        />
-        <Circle cx={startPoint.x} cy={startPoint.y} fill={colors.white} r={markerRadius} stroke={colors.accent} strokeWidth="1.5" />
-        <Circle cx={endPoint.x} cy={endPoint.y} fill={colors.accent} r={markerRadius} />
-      </Svg>
+      <WebMap coordinates={coordinates} fullScreen={fullScreen} live={live} />
       {onPress && !fullScreen ? (
         <Pressable
           accessibilityLabel={t('commute.openMap')}
@@ -115,6 +196,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
+    zIndex: 20,
   },
   expandHint: {
     alignItems: 'center',
@@ -126,29 +208,7 @@ const styles = StyleSheet.create({
     right: 10,
     top: 10,
     width: 32,
-  },
-  road: {
-    backgroundColor: '#F9FCF8',
-    height: 16,
-    position: 'absolute',
-    width: '150%',
-  },
-  roadOne: {
-    left: -30,
-    top: 42,
-    transform: [{ rotate: '12deg' }],
-  },
-  roadTwo: {
-    left: -25,
-    top: 108,
-    transform: [{ rotate: '-16deg' }],
-  },
-  roadThree: {
-    height: 14,
-    left: 120,
-    top: -14,
-    transform: [{ rotate: '-17deg' }],
-    width: 20,
+    zIndex: 21,
   },
   statusPill: {
     alignItems: 'center',
@@ -161,6 +221,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     position: 'absolute',
+    zIndex: 21,
   },
   statusText: {
     color: colors.forest,
