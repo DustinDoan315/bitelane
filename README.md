@@ -1,26 +1,29 @@
 # BiteLane
 
-Native iOS foundation for BiteLane: food recommendations that fit a user’s route, budget, and mood.
+Expo React Native foundation for BiteLane: food recommendations that fit a user's route, budget, and mood.
 
 ## Current slice
 
-- SwiftUI app shell targeting iOS 17+
-- Onboarding screen and four-tab navigation: Discover, Route, Saved, Profile
-- Mock recommendations behind `RecommendationProviding`
-- In-memory saved meals and route preferences
-- English/Vietnamese localization scaffolding
-- Unit tests for the mock service and app store
+- Expo blank TypeScript app
+- Onboarding screen
+- Four lightweight tabs: Discover, Route, Saved, Profile
+- Mock meal recommendations
+- In-memory route preferences and saved meals
+- Shared theme and reusable meal/empty-state components
+
+## Run locally
+
+```bash
+npm install
+npm run start
+```
+
+Then press `i` for the iOS simulator, or scan the QR code with Expo Go.
 
 ## Planned next slices
 
-1. Replace mock route inputs with MapKit search and Core Location permission flow.
-2. Add a place/recommendation API client behind the existing service boundary.
-3. Persist saved meals and preferences locally.
-4. Add loading, empty, offline, and error states.
-5. Add analytics, authentication, and backend synchronization only when the product model is defined.
-
-## App Store copy
-
-- App name: `BiteLane: Food on Your Way`
-- Tagline: `Your next meal, already on the way.`
-- Vietnamese positioning: `Chọn món ngon trên đường đi.`
+1. Add Expo Router or React Navigation when navigation requirements grow.
+2. Replace mock route inputs with location search and permissions.
+3. Add a recommendation API client behind the mock data boundary.
+4. Persist saved meals and preferences with local storage.
+5. Add loading, offline, and error states.
