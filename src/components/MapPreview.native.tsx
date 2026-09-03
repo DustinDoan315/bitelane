@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { Icon } from './Icon';
 import { colors } from '../theme';
 import type { Coordinate } from '../types';
 import type { MapPreviewProps } from './MapPreview';
@@ -15,7 +16,7 @@ const fallbackCoordinates: Coordinate[] = [
   { latitude: 10.7862, longitude: 106.6962 },
 ];
 
-export function MapPreview({ route, isLoading = false, error }: MapPreviewProps) {
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, onPress }: MapPreviewProps) {
   const { t } = useTranslation();
   const mapRef = useRef<MapView>(null);
   const coordinates = useMemo(
@@ -47,7 +48,7 @@ export function MapPreview({ route, isLoading = false, error }: MapPreviewProps)
   }, [coordinates]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, fullScreen && styles.fullScreenContainer]}>
       <MapView
         ref={mapRef}
         mapType="standard"
@@ -64,6 +65,19 @@ export function MapPreview({ route, isLoading = false, error }: MapPreviewProps)
         <Marker coordinate={start} pinColor={colors.forest} />
         <Marker coordinate={end} pinColor={colors.accent} />
       </MapView>
+      {onPress && !fullScreen ? (
+        <Pressable
+          accessibilityLabel={t('commute.openMap')}
+          accessibilityRole="button"
+          onPress={onPress}
+          style={styles.mapTapOverlay}
+        />
+      ) : null}
+      {onPress && !fullScreen ? (
+        <View pointerEvents="none" style={styles.expandHint}>
+          <Icon color={colors.forest} name="fullscreen" size={17} />
+        </View>
+      ) : null}
       <View style={styles.statusPill}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
         <Text style={styles.statusText}>{statusLabel}</Text>
@@ -78,12 +92,35 @@ const styles = StyleSheet.create({
     height: 138,
     overflow: 'hidden',
   },
+  fullScreenContainer: {
+    borderRadius: 0,
+    flex: 1,
+    height: undefined,
+  },
   map: {
     bottom: 0,
     left: 0,
     position: 'absolute',
     right: 0,
     top: 0,
+  },
+  mapTapOverlay: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  expandHint: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    width: 32,
   },
   statusPill: {
     alignItems: 'center',

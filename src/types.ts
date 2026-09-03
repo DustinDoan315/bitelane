@@ -4,6 +4,7 @@ export type AppScreen =
   | 'goal'
   | 'commute'
   | 'home'
+  | 'routeMap'
   | 'history'
   | 'saved'
   | 'alternatives'

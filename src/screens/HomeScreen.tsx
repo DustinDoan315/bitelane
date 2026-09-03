@@ -13,6 +13,7 @@ type HomeScreenProps = {
   featuredMeal: Meal;
   commute: CommutePreferences;
   onEditCommute: () => void;
+  onOpenMap: () => void;
   onNavigate: () => void;
   onToggleLanguage: () => void;
   onTryAnother: () => void;
@@ -25,6 +26,7 @@ export function HomeScreen({
   featuredMeal,
   commute,
   onEditCommute,
+  onOpenMap,
   onNavigate,
   onToggleLanguage,
   onTryAnother,
@@ -47,10 +49,10 @@ export function HomeScreen({
       </View>
 
       <Pressable accessibilityRole="button" onPress={onEditCommute}>
-        <CommuteCard mode={commute.mode} route={route} />
+        <CommuteCard isLoading={isRouteLoading} mode={commute.mode} route={route} />
       </Pressable>
 
-      <MapPreview error={routeError} isLoading={isRouteLoading} route={route} />
+      <MapPreview error={routeError} isLoading={isRouteLoading} onPress={onOpenMap} route={route} />
 
       <FeaturedMealCard meal={featuredMeal} onPress={onTryAnother} />
 

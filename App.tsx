@@ -8,6 +8,7 @@ import { AlternativesScreen } from './src/screens/AlternativesScreen';
 import { FeedbackScreen } from './src/screens/FeedbackScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { MemoryScreen } from './src/screens/MemoryScreen';
+import { RouteMapScreen } from './src/screens/RouteMapScreen';
 import { SetupCommuteScreen } from './src/screens/SetupCommuteScreen';
 import { SetupGoalScreen } from './src/screens/SetupGoalScreen';
 import { alternativeMeals, featuredMeal, recentMeals, savedMeals } from './src/data/mockRecommendations';
@@ -146,6 +147,7 @@ export default function App() {
             setCommuteReturnScreen('home');
             setScreen('commute');
           }}
+          onOpenMap={() => setScreen('routeMap')}
           onNavigate={() => {
             void Linking.openURL(
               `https://maps.apple.com/?daddr=${encodeURIComponent(commute.workAddress)}`,
@@ -155,6 +157,20 @@ export default function App() {
           onTryAnother={() => setScreen('feedback')}
           route={route}
           routeError={routeError}
+        />
+      );
+      break;
+    case 'routeMap':
+      content = (
+        <RouteMapScreen
+          commute={commute}
+          error={routeError}
+          isLoading={isRouteLoading}
+          onBack={() => setScreen('home')}
+          onRetry={() => {
+            void refreshRoute(commute);
+          }}
+          route={route}
         />
       );
       break;

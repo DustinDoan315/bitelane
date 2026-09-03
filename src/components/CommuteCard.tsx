@@ -6,15 +6,21 @@ import { colors, spacing } from '../theme';
 import type { CommuteMode, RouteData } from '../types';
 
 type CommuteCardProps = {
+  isLoading?: boolean;
   mode: CommuteMode;
   route?: RouteData | null;
 };
 
-export function CommuteCard({ mode, route }: CommuteCardProps) {
+export function CommuteCard({ isLoading = false, mode, route }: CommuteCardProps) {
   const { t } = useTranslation();
   const routeMeta = route
     ? `${t(`commute.${mode}`)} · ${Math.max(1, Math.round(route.durationSeconds / 60))} min · ${(route.distanceMeters / 1000).toFixed(1)} km`
     : t('home.routeMeta');
+  const statusLabel = isLoading
+    ? t('commute.updatingRoute')
+    : route?.source === 'live'
+      ? t('home.live')
+      : t('commute.routeFallback');
 
   return (
     <View style={styles.card}>
@@ -26,7 +32,7 @@ export function CommuteCard({ mode, route }: CommuteCardProps) {
         <Text style={styles.meta}>{routeMeta}</Text>
       </View>
       <View style={styles.livePill}>
-        <Text style={styles.liveText}>{t('home.live')}</Text>
+        <Text style={styles.liveText}>{statusLabel}</Text>
       </View>
     </View>
   );

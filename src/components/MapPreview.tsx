@@ -1,7 +1,8 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Polyline as SvgPolyline } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 
+import { Icon } from './Icon';
 import { colors } from '../theme';
 import type { RouteData } from '../types';
 
@@ -9,6 +10,8 @@ export type MapPreviewProps = {
   route?: RouteData | null;
   isLoading?: boolean;
   error?: string | null;
+  fullScreen?: boolean;
+  onPress?: () => void;
 };
 
 const fallbackCoordinates = [
@@ -38,13 +41,15 @@ function toSvgPoints(coordinates: Array<{ latitude: number; longitude: number }>
   }));
 }
 
-export function MapPreview({ route, isLoading = false, error }: MapPreviewProps) {
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, onPress }: MapPreviewProps) {
   const { t } = useTranslation();
   const live = route?.source === 'live';
   const coordinates = route?.coordinates.length ? route.coordinates : fallbackCoordinates;
   const points = toSvgPoints(coordinates);
   const startPoint = points[0] ?? { x: 8, y: 84 };
   const endPoint = points[points.length - 1] ?? { x: 92, y: 16 };
+  const routeStrokeWidth = fullScreen ? 1.4 : 3;
+  const markerRadius = fullScreen ? 2.1 : 3.5;
   const statusLabel = isLoading
     ? t('commute.updatingRoute')
     : live
@@ -54,7 +59,7 @@ export function MapPreview({ route, isLoading = false, error }: MapPreviewProps)
         : t('commute.routePreview');
 
   return (
-    <View style={styles.map}>
+    <View style={[styles.map, fullScreen && styles.fullScreenMap]}>
       <View style={[styles.road, styles.roadOne]} />
       <View style={[styles.road, styles.roadTwo]} />
       <View style={[styles.road, styles.roadThree]} />
@@ -65,11 +70,24 @@ export function MapPreview({ route, isLoading = false, error }: MapPreviewProps)
           stroke={live ? colors.accent : colors.secondaryText}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth="3"
+          strokeWidth={routeStrokeWidth}
         />
-        <Circle cx={startPoint.x} cy={startPoint.y} fill={colors.white} r="3.5" stroke={colors.accent} strokeWidth="1.5" />
-        <Circle cx={endPoint.x} cy={endPoint.y} fill={colors.accent} r="3.5" />
+        <Circle cx={startPoint.x} cy={startPoint.y} fill={colors.white} r={markerRadius} stroke={colors.accent} strokeWidth="1.5" />
+        <Circle cx={endPoint.x} cy={endPoint.y} fill={colors.accent} r={markerRadius} />
       </Svg>
+      {onPress && !fullScreen ? (
+        <Pressable
+          accessibilityLabel={t('commute.openMap')}
+          accessibilityRole="button"
+          onPress={onPress}
+          style={styles.mapTapOverlay}
+        />
+      ) : null}
+      {onPress && !fullScreen ? (
+        <View pointerEvents="none" style={styles.expandHint}>
+          <Icon color={colors.forest} name="fullscreen" size={17} />
+        </View>
+      ) : null}
       <View style={styles.statusPill}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
         <Text style={styles.statusText}>{statusLabel}</Text>
@@ -85,6 +103,29 @@ const styles = StyleSheet.create({
     height: 138,
     overflow: 'hidden',
     position: 'relative',
+  },
+  fullScreenMap: {
+    borderRadius: 0,
+    flex: 1,
+    height: undefined,
+  },
+  mapTapOverlay: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  expandHint: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    width: 32,
   },
   road: {
     backgroundColor: '#F9FCF8',
