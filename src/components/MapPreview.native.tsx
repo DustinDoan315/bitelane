@@ -61,7 +61,12 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
         toolbarEnabled={false}
         zoomEnabled
       >
-        {live ? <Polyline coordinates={coordinates} strokeColor={colors.accent} strokeWidth={5} /> : null}
+        {live ? (
+          <>
+            <Polyline coordinates={coordinates} strokeColor={colors.white} strokeWidth={10} />
+            <Polyline coordinates={coordinates} strokeColor={colors.accent} strokeWidth={5} />
+          </>
+        ) : null}
         <Marker coordinate={start} pinColor={colors.forest} />
         <Marker coordinate={end} pinColor={colors.accent} />
       </MapView>
