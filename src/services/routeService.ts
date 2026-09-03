@@ -132,8 +132,6 @@ export function getFallbackRoute(preferences: CommutePreferences): RouteData {
 
   return {
     coordinates: [origin, destination],
-    distanceMeters: 9074,
-    durationSeconds: 632,
     source: 'fallback',
   };
 }

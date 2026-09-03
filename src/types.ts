@@ -27,7 +27,12 @@ export type RouteData = {
   coordinates: Coordinate[];
   distanceMeters: number;
   durationSeconds: number;
-  source: 'live' | 'fallback';
+  source: 'live';
+} | {
+  coordinates: Coordinate[];
+  distanceMeters?: never;
+  durationSeconds?: never;
+  source: 'fallback';
 };
 
 export type MapType = 'standard' | 'satellite' | 'hybrid';
