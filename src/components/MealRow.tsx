@@ -2,16 +2,24 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Icon } from './Icon';
+import type { IconName } from './Icon';
 import type { Meal } from '../types';
 import { colors, spacing } from '../theme';
+
+type MealRowAction = {
+  accessibilityLabel: string;
+  iconName?: IconName;
+  onPress: () => void;
+};
 
 type MealRowProps = {
   meal: Meal;
   metaVariant?: 'saved' | 'recent' | 'alternative';
   onPress?: () => void;
+  trailingAction?: MealRowAction;
 };
 
-export function MealRow({ meal, metaVariant = 'alternative', onPress }: MealRowProps) {
+export function MealRow({ meal, metaVariant = 'alternative', onPress, trailingAction }: MealRowProps) {
   const { t } = useTranslation();
   const tileBackground = {
     green: colors.greenSoft,
@@ -19,6 +27,7 @@ export function MealRow({ meal, metaVariant = 'alternative', onPress }: MealRowP
     yellow: colors.yellow,
   }[meal.tileColor];
   const meta = t(meal.metaKey, {
+    closing: meal.closingTime,
     minutes: meal.distanceMinutes,
     price: meal.priceText,
     rating: meal.rating,
@@ -37,7 +46,19 @@ export function MealRow({ meal, metaVariant = 'alternative', onPress }: MealRowP
           <Text style={styles.timeText}>{t('meal.alternativeTime', { minutes: meal.alternativeTime })}</Text>
         </View>
       ) : null}
-      <Icon color={colors.accent} name="chevron-right" size={24} />
+      {trailingAction ? (
+        <Pressable
+          accessibilityLabel={trailingAction.accessibilityLabel}
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={trailingAction.onPress}
+          style={styles.actionButton}
+        >
+          <Icon color={colors.accent} name={trailingAction.iconName ?? 'heart'} size={20} />
+        </Pressable>
+      ) : (
+        <Icon color={colors.accent} name="chevron-right" size={24} />
+      )}
     </View>
   );
 
@@ -93,5 +114,13 @@ const styles = StyleSheet.create({
     color: colors.forest,
     fontSize: 12,
     fontWeight: '700',
+  },
+  actionButton: {
+    alignItems: 'center',
+    backgroundColor: colors.accentSoft,
+    borderRadius: 16,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
   },
 });

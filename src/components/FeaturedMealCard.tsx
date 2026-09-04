@@ -6,19 +6,21 @@ import type { Meal } from '../types';
 import { colors, spacing } from '../theme';
 
 type FeaturedMealCardProps = {
+  isSaved?: boolean;
   meal: Meal;
   onPress?: () => void;
+  onToggleSaved?: () => void;
 };
 
-export function FeaturedMealCard({ meal, onPress }: FeaturedMealCardProps) {
+export function FeaturedMealCard({ isSaved = false, meal, onPress, onToggleSaved }: FeaturedMealCardProps) {
   const { t } = useTranslation();
   const tileBackground = {
     green: colors.greenSoft,
     peach: colors.peach,
     yellow: colors.yellow,
   }[meal.tileColor];
-  const cardBody = (
-    <View style={styles.card}>
+  const cardContent = (
+    <>
       <View style={[styles.illustration, { backgroundColor: tileBackground }]}>
         <View style={styles.illustrationCircle}>
           <Icon color={colors.peach} name={meal.iconName} size={45} />
@@ -46,15 +48,28 @@ export function FeaturedMealCard({ meal, onPress }: FeaturedMealCardProps) {
           </View>
         </View>
       </View>
-    </View>
+    </>
   );
 
-  return onPress ? (
-    <Pressable accessibilityRole="button" onPress={onPress}>
-      {cardBody}
-    </Pressable>
-  ) : (
-    cardBody
+  return (
+    <View style={styles.card}>
+      {onPress ? (
+        <Pressable accessibilityRole="button" onPress={onPress}>
+          {cardContent}
+        </Pressable>
+      ) : cardContent}
+      {onToggleSaved ? (
+        <Pressable
+          accessibilityLabel={t(isSaved ? 'meal.removeSaved' : 'meal.save')}
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={onToggleSaved}
+          style={styles.saveButton}
+        >
+          <Icon color={colors.accent} name={isSaved ? 'heart' : 'heart-outline'} size={21} />
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -63,6 +78,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: 22,
     overflow: 'hidden',
+    position: 'relative',
   },
   illustration: {
     height: 105,
@@ -135,5 +151,17 @@ const styles = StyleSheet.create({
     height: 42,
     justifyContent: 'center',
     width: 42,
+  },
+  saveButton: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: spacing.md,
+    top: spacing.md,
+    width: 36,
+    zIndex: 2,
   },
 });

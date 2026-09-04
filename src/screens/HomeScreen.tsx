@@ -12,9 +12,11 @@ import type { CommutePreferences, Meal, RouteData } from '../types';
 type HomeScreenProps = {
   featuredMeal: Meal;
   commute: CommutePreferences;
+  isFeaturedSaved?: boolean;
   onEditCommute: () => void;
   onOpenMap: () => void;
   onNavigate: () => void;
+  onToggleFeaturedSaved?: () => void;
   onToggleLanguage: () => void;
   onTryAnother: () => void;
   route?: RouteData | null;
@@ -25,9 +27,11 @@ type HomeScreenProps = {
 export function HomeScreen({
   featuredMeal,
   commute,
+  isFeaturedSaved = false,
   onEditCommute,
   onOpenMap,
   onNavigate,
+  onToggleFeaturedSaved,
   onToggleLanguage,
   onTryAnother,
   route,
@@ -54,7 +58,12 @@ export function HomeScreen({
 
       <MapPreview error={routeError} isLoading={isRouteLoading} onPress={onOpenMap} route={route} />
 
-      <FeaturedMealCard meal={featuredMeal} onPress={onTryAnother} />
+      <FeaturedMealCard
+        isSaved={isFeaturedSaved}
+        meal={featuredMeal}
+        onPress={onTryAnother}
+        onToggleSaved={onToggleFeaturedSaved}
+      />
 
       <PrimaryButton dark iconName="arrow-top-right" labelKey="home.takeMeThere" onPress={onNavigate} />
 

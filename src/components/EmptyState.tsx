@@ -2,19 +2,21 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Icon } from './Icon';
+import type { IconName } from './Icon';
 import { colors, spacing } from '../theme';
 
 type EmptyStateProps = {
+  iconName?: IconName;
   titleKey: string;
   bodyKey: string;
 };
 
-export function EmptyState({ titleKey, bodyKey }: EmptyStateProps) {
+export function EmptyState({ bodyKey, iconName = 'heart-outline', titleKey }: EmptyStateProps) {
   const { t } = useTranslation();
 
   return (
     <View style={styles.container}>
-      <Icon color={colors.forest} name="heart-outline" size={48} />
+      <Icon color={colors.forest} name={iconName} size={48} />
       <Text style={styles.title}>{t(titleKey)}</Text>
       <Text style={styles.body}>{t(bodyKey)}</Text>
     </View>

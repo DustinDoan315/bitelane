@@ -142,6 +142,7 @@ export default function App() {
         <HomeScreen
           commute={commute}
           featuredMeal={featuredMeal}
+          isFeaturedSaved={savedMealIds.has(featuredMeal.id)}
           isRouteLoading={isRouteLoading}
           onEditCommute={() => {
             setCommuteReturnScreen('home');
@@ -153,6 +154,7 @@ export default function App() {
               `https://maps.apple.com/?daddr=${encodeURIComponent(commute.workAddress)}`,
             );
           }}
+          onToggleFeaturedSaved={() => toggleSaved(featuredMeal.id)}
           onToggleLanguage={toggleLanguage}
           onTryAnother={() => setScreen('feedback')}
           route={route}
@@ -175,10 +177,25 @@ export default function App() {
       );
       break;
     case 'history':
-      content = <MemoryScreen recentMeals={recentMeals} savedMeals={saved} segment="recent" />;
+      content = (
+        <MemoryScreen
+          onOpenPicker={() => selectTab('home')}
+          recentMeals={recentMeals}
+          savedMeals={saved}
+          segment="recent"
+        />
+      );
       break;
     case 'saved':
-      content = <MemoryScreen recentMeals={recentMeals} savedMeals={saved} segment="saved" />;
+      content = (
+        <MemoryScreen
+          onOpenPicker={() => selectTab('home')}
+          onToggleSaved={toggleSaved}
+          recentMeals={recentMeals}
+          savedMeals={saved}
+          segment="saved"
+        />
+      );
       break;
     case 'alternatives':
       content = (
