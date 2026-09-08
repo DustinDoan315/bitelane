@@ -14,7 +14,7 @@ Date: 2026-09-08 (Asia/Ho_Chi_Minh)
 
 - Meaningful initial empty state rendered with no seeded locations or places.
 - Explicit start/destination searches returned live selectable results.
-- Selected journey loaded a real Leaflet route and real venue cards.
+- Selected journey loaded real venue cards; the full route map opened through its explicit action.
 - Clear full-map button opened a fitted road route at mobile width; the old transparent map interaction was found unreliable and replaced. Unconfigured satellite/CARTO layers were removed.
 - Place details showed only available fields, source timestamp, source link, and unknown-price text.
 - Calculate-stop returned a route through the selected venue and displayed the difference from the base route.

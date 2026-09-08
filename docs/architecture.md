@@ -24,7 +24,7 @@ AsyncStorage key `bitelane:v1` stores versioned `StoredState`: selected journey,
 
 ## UI boundaries
 
-- Discover: setup/route preview → filters → proximity-ranked results, separate load/error/empty states.
+- Discover: setup/route summary → budget/data status → filters → proximity-ranked results, with the full route map behind an explicit action.
 - Saved: intentions; saved place snapshots with detail access and unsave.
 - History: user-confirmed events, with timestamps and reversible mistakes.
 - Detail: available source fields, directions, calculate-stop, save, confirm visit.

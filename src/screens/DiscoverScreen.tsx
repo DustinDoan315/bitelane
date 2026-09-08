@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ActionButton } from '../components/ActionButton';
-import { MapPreview } from '../components/MapPreview';
+import { FilterChip } from '../components/FilterChip';
 import { PlaceCard } from '../components/PlaceCard';
 import { colors } from '../theme';
 import type { Candidate, Journey, Place, Preferences, RouteData } from '../types';
@@ -25,46 +25,52 @@ export function DiscoverScreen({ journey, route, candidates, phase, error, saved
       <ActionButton label={t('app.setupRoute')} onPress={onSetup} />
     </View> : <>
       <View style={styles.journey}>
-        <View style={{ flex: 1, gap: 8 }}>
+        <View style={styles.routeCopy}>
+          <Text style={styles.routeLabel}>{t('app.routeLabel')}</Text>
           <Text numberOfLines={2} style={styles.address}>{journey.origin.label}</Text>
-          <Text style={styles.body}>↓</Text>
+          <Text style={styles.routeArrow}>↓</Text>
           <Text numberOfLines={2} style={styles.address}>{journey.destination.label}</Text>
         </View>
         <ActionButton secondary label={t('app.edit')} onPress={onSetup} />
       </View>
-      <MapPreview route={route} isLoading={phase === 'route'} error={error} places={candidates.slice(0, 30).map((c) => c.place)} />
       {route ? <>
         <Text style={styles.small}>{t('app.routeMeta', { minutes: Math.round(route.durationSeconds / 60), km: (route.distanceMeters / 1000).toFixed(1) })}</Text>
         <ActionButton secondary label={t('commute.openMap')} onPress={onMap} />
       </> : null}
+      <View style={styles.budgetCard}>
+        <View style={styles.budgetIcon}><Text style={styles.currency}>₫</Text></View>
+        <View style={styles.budgetCopy}>
+          <Text style={styles.budgetEyebrow}>{t('app.budgetEyebrow')}</Text>
+          <Text style={styles.budgetTitle}>{t('app.budgetTitle')}</Text>
+          <Text style={styles.small}>{t('app.budgetHelp')}</Text>
+        </View>
+      </View>
       <View style={styles.filters}>
-        <Filter label={t('app.vegetarianOnly')} value={preferences.vegetarianOnly} onChange={(value) => onPreferences({ ...preferences, vegetarianOnly: value })} />
-        <Filter label={t('app.hideVisited')} value={preferences.hideVisited} onChange={(value) => onPreferences({ ...preferences, hideVisited: value })} />
+        <FilterChip label={t('app.vegetarianOnly')} selected={preferences.vegetarianOnly} onPress={() => onPreferences({ ...preferences, vegetarianOnly: !preferences.vegetarianOnly })} />
+        <FilterChip label={t('app.hideVisited')} selected={preferences.hideVisited} onPress={() => onPreferences({ ...preferences, hideVisited: !preferences.hideVisited })} />
       </View>
       {phase !== 'idle' ? <View style={styles.welcome}><ActivityIndicator color={colors.forest} /><Text accessibilityLiveRegion="polite" style={styles.body}>{t(`app.loading.${phase}`)}</Text></View> : error ? <View style={styles.welcome}>
         <Text accessibilityRole="alert" style={styles.error}>{t(`app.errors.${error}`, { defaultValue: t('app.errors.serviceUnavailable') })}</Text>
         <ActionButton label={t('app.retry')} onPress={onRetry} />
       </View> : <>
-        <View style={styles.row}><Text style={styles.heading}>{t('app.placesCount', { count: candidates.length })}</Text><ActionButton secondary label={t('app.refresh')} onPress={onRetry} /></View>
-        <Text style={styles.small}>{t('app.rankingHelp')}</Text>
+        <View style={styles.row}><Text style={styles.heading}>{t('app.nearbyTitle')}</Text><Pressable accessibilityRole="button" onPress={onRetry} style={styles.refresh}><Text style={styles.refreshText}>{t('app.refresh')}</Text></Pressable></View>
+        <Text style={styles.small}>{t('app.placesCount', { count: candidates.length })} · {t('app.rankingHelp')}</Text>
         {!candidates.length ? <View style={styles.welcome}><Text style={styles.heading}>{t('app.noPlaces')}</Text><Text style={styles.body}>{t('app.noPlacesHelp')}</Text></View> : null}
-        {candidates.slice(0, limit).map(({ place, distanceFromRouteMeters }, index) => <PlaceCard key={place.id} place={place}
+        {candidates.slice(0, Math.min(limit, 5)).map(({ place, distanceFromRouteMeters }, index) => <PlaceCard key={place.id} place={place}
           saved={saved.some((p) => p.id === place.id)} onOpen={() => onOpen(place)} onSave={() => onSave(place)} distance={distanceFromRouteMeters}
           subtitle={index === 0 ? t('app.closest') : undefined} />)}
-        {candidates.length > limit ? <ActionButton secondary label={t('app.showMore')} onPress={() => setLimit((value) => value + 10)} /> : null}
+        {candidates.length > Math.min(limit, 5) ? <ActionButton secondary label={t('app.showMore')} onPress={() => setLimit((value) => value + 5)} /> : null}
       </>}
     </>}
     <Text style={styles.small}>{t('app.dataNotice')}</Text>
   </ScrollView>;
 }
 
-function Filter({ label, value, onChange }: { label: string; value: boolean; onChange: (value: boolean) => void }) {
-  return <View style={styles.row}><Text style={[styles.body, { flex: 1 }]}>{label}</Text><Switch accessibilityLabel={label} value={value} onValueChange={onChange} trackColor={{ true: colors.forest }} /></View>;
-}
 const styles = StyleSheet.create({
   page: { padding: 24, gap: 18, paddingBottom: 32 }, eyebrow: { color: colors.accent, fontWeight: '800', fontSize: 11, letterSpacing: 1.2 },
   title: { color: colors.text, fontSize: 34, fontWeight: '800', lineHeight: 40 }, body: { color: colors.secondaryText, fontSize: 15, lineHeight: 23 },
   heading: { color: colors.text, fontSize: 19, fontWeight: '800' }, welcome: { backgroundColor: colors.greenSoft, borderRadius: 22, padding: 22, gap: 16 },
-  journey: { flexDirection: 'row', backgroundColor: colors.white, borderRadius: 20, padding: 18, alignItems: 'center', gap: 16 }, address: { fontSize: 14, fontWeight: '600', color: colors.text },
-  small: { color: colors.secondaryText, fontSize: 12, lineHeight: 19 }, filters: { gap: 14 }, row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }, error: { color: colors.accent, lineHeight: 22 },
+  journey: { flexDirection: 'row', backgroundColor: colors.white, borderRadius: 20, padding: 18, alignItems: 'center', gap: 16, borderWidth: 1, borderColor: colors.border }, routeCopy: { flex: 1, gap: 7 }, routeLabel: { color: colors.accent, fontSize: 11, fontWeight: '800', letterSpacing: 1 }, routeArrow: { color: colors.secondaryText, fontSize: 16 }, address: { fontSize: 14, fontWeight: '700', color: colors.text },
+  budgetCard: { flexDirection: 'row', gap: 14, backgroundColor: colors.peach, borderRadius: 20, padding: 18, alignItems: 'flex-start' }, budgetIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' }, currency: { color: colors.accent, fontSize: 24, fontWeight: '800' }, budgetCopy: { flex: 1, gap: 5 }, budgetEyebrow: { color: colors.accent, fontSize: 11, fontWeight: '800', letterSpacing: 1 }, budgetTitle: { color: colors.text, fontSize: 17, fontWeight: '800' },
+  small: { color: colors.secondaryText, fontSize: 12, lineHeight: 19 }, filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }, refresh: { padding: 8, minHeight: 40, justifyContent: 'center' }, refreshText: { color: colors.forest, fontSize: 14, fontWeight: '700' }, error: { color: colors.accent, lineHeight: 22 },
 });
