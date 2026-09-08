@@ -1,61 +1,28 @@
 export type MainTab = 'home' | 'history' | 'saved';
-
-export type AppScreen =
-  | 'goal'
-  | 'commute'
-  | 'home'
-  | 'routeMap'
-  | 'history'
-  | 'saved'
-  | 'alternatives'
-  | 'feedback';
-
-export type FoodGoal = 'healthier' | 'saveTime' | 'budget';
-
-export type CommuteMode = 'motorbike' | 'car';
-
-export type FeedbackReason = 'tooFar' | 'tooExpensive' | 'similar' | 'notForMe';
-
-export type MealIconName = 'food' | 'bowl-mix' | 'baguette';
-
-export type Coordinate = {
-  latitude: number;
-  longitude: number;
-};
-
-export type RouteData = {
-  coordinates: Coordinate[];
-  distanceMeters: number;
-  durationSeconds: number;
-  source: 'live';
-} | {
-  coordinates: Coordinate[];
-  distanceMeters?: never;
-  durationSeconds?: never;
-  source: 'fallback';
-};
-
-export type MapType = 'standard' | 'satellite' | 'hybrid';
-
-export type Meal = {
+export type Coordinate = { latitude: number; longitude: number };
+export type AddressSuggestion = { id: string; label: string; coordinate: Coordinate };
+export type Journey = { origin: AddressSuggestion; destination: AddressSuggestion };
+export type RouteData = { coordinates: Coordinate[]; distanceMeters: number; durationSeconds: number; source: 'live' };
+export type Place = {
   id: string;
-  nameKey: string;
-  metaKey: string;
-  reasonKey?: string;
-  noteKey?: string;
-  priceText: string;
-  rating: number;
-  distanceMinutes: number;
-  closingTime?: string;
-  alternativeTime?: number;
-  iconName: MealIconName;
-  tileColor: 'peach' | 'green' | 'yellow';
+  name: string;
+  coordinate: Coordinate;
+  category: 'restaurant' | 'cafe' | 'fast_food' | 'food_court';
+  cuisine?: string;
+  address?: string;
+  openingHours?: string;
+  vegetarian: boolean;
+  sourceUrl: string;
+  fetchedAt: string;
 };
-
-export type CommutePreferences = {
-  homeAddress: string;
-  homeCoordinate?: Coordinate;
-  workAddress: string;
-  workCoordinate?: Coordinate;
-  mode: CommuteMode;
+export type Candidate = { place: Place; distanceFromRouteMeters: number };
+export type Visit = { id: string; place: Place; visitedAt: string };
+export type Preferences = { vegetarianOnly: boolean; hideVisited: boolean };
+export type StoredState = {
+  version: 1;
+  journey: Journey | null;
+  preferences: Preferences;
+  saved: Place[];
+  visits: Visit[];
+  language: 'en' | 'vi';
 };

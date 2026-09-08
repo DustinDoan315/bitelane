@@ -1,40 +1,38 @@
-# BiteLane architecture plan
+# BiteLane architecture
 
-## Client boundary
+## Current implementation
 
-The Expo React Native client owns presentation state and a short-lived Supabase session. It should not contain Google Maps server keys or call Google APIs directly.
+`App.tsx` coordinates three tabs and setup/map/detail overlays. Android hardware back closes overlays before changing tabs. No network logic or provider secrets live in screens.
 
-```text
-Expo client
-  └─ authenticated request + session token
-       ↓
-Supabase Edge Function: recommendation API
-  ├─ verify Supabase Auth JWT
-  ├─ read preferences and cached route/place data
-  ├─ call Routes and Places providers on cache miss
-  ├─ rank one daily pick and two alternatives
-  └─ write event/history data
-       ↓
-Postgres (RLS)
-```
+`useBiteLane` owns the persisted schema, hydration, sequential writes, route/place request generation IDs, filters, saves, and visit events. It guards stale results when a journey changes. Failed storage reads preserve the original value and display an error instead of overwriting it with empty data.
 
-## Current code mapping
+`JourneySetupScreen` maintains isolated drafts. Editing an address clears its selected coordinate; only a selected search result can be submitted. Canceled edits do not modify the saved journey. Search runs on button/keyboard submit, not keystrokes. Each search discards stale results.
 
-- `src/screens`: user-facing flows from the supplied UI exports.
-- `src/components`: reusable presentation primitives and cards.
-- `src/data/mockRecommendations.ts`: temporary local data boundary.
-- `src/i18n.ts`: device locale detection and English/Vietnamese resources.
-- `src/theme.ts`: shared color and spacing tokens.
-- `src/services/routeService.ts`: typed geocoding/routing boundary with timeout handling and a safe fallback route for offline/error states.
-- `App.tsx`: lightweight state coordinator until navigation and a server state layer are introduced.
+## Provider boundary
 
-## Recommended next boundaries
+1. `routeService.searchAddresses`: Photon GeoJSON → validated selectable location.
+2. `routeService.getCommuteRoute`: selected coordinates → OSRM road geometry/distance/duration. No guessed address coordinates or fallback lines.
+3. `placeService.findPlaces`: bounded Overpass query → named food venues → 750 m route corridor filter → proximity ordering. Node/way/relation source IDs are retained. Unknown fields remain absent.
+4. `PlaceDetailsScreen`: an explicit action requests start → place → destination; the duration difference is labeled as estimated extra driving time.
+5. `navigationService`: coordinate-based destination handoff. Does not write history.
 
-1. Extract `recommendationClient` with the same shape as the mock data source.
-2. Add `supabaseClient` and session lifecycle handling.
-3. Add typed API contracts for daily pick, alternatives, route estimates, and feedback events.
-4. Move persistence and provider secrets behind the Edge Function/Postgres boundary.
+`transport` centralizes bounded short-lived caching, in-flight deduplication, timeouts, and HTTP errors. Provider payloads are untrusted; adapters validate expected fields before building domain values. No silent provider failover or fake data.
 
-## Route implementation note
+## Persistence
 
-The current prototype calls OpenStreetMap Nominatim for address resolution and OSRM for route geometry so the UI can demonstrate a real polyline without a client-side API key. Native builds render the route with `react-native-maps` and the platform map provider; web renders the same returned geometry as an SVG overlay. Before shipping, proxy both calls through the Supabase Edge Function, add request caching/rate limits, and keep precise addresses out of third-party client requests.
+AsyncStorage key `bitelane:v1` stores versioned `StoredState`: selected journey, language, meaningful filters, saved place snapshots, and timestamped confirmed visits. Runtime validation checks coordinates, provider IDs, source URLs, and dates on load. Writes are serialized to prevent older writes finishing after newer writes. Place retrieval timestamps are distinct from visit timestamps. In-memory provider caches are deliberately not persisted.
+
+## UI boundaries
+
+- Discover: setup/route preview → filters → proximity-ranked results, separate load/error/empty states.
+- Saved: intentions; saved place snapshots with detail access and unsave.
+- History: user-confirmed events, with timestamps and reversible mistakes.
+- Detail: available source fields, directions, calculate-stop, save, confirm visit.
+- Web map: dynamic Leaflet, one clearly attributed OSM layer, real geometry, text-safe place popups, and resize handling.
+- Native map: platform map provider, real geometry and venue markers. No fake initial coordinates.
+
+## Before a public launch
+
+The three public development endpoints must be replaced by managed or self-hosted capacity. A server gateway should own credentials, shared quotas, caching/licensing, telemetry, and provider adapters. Add authentication only when implementing account sync or other account features. Define RLS and retention if a relational store is selected. No Supabase project, billing account, backend deployment, or paid service has been provisioned by this refactor.
+
+Routing supports driving only. A future provider must supply an actual motorbike profile before exposing that choice. Prices and opening status need a richer licensed source. See the product plan for priorities and release gates.

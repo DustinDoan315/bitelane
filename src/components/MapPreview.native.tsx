@@ -1,26 +1,19 @@
 import { useEffect, useMemo, useRef } from 'react';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { Icon } from './Icon';
 import { colors } from '../theme';
 import type { Coordinate } from '../types';
 import type { MapPreviewProps } from './MapPreview';
 
-const fallbackCoordinates: Coordinate[] = [
-  { latitude: 10.73287, longitude: 106.708003 },
-  { latitude: 10.7395, longitude: 106.704 },
-  { latitude: 10.755, longitude: 106.701 },
-  { latitude: 10.771, longitude: 106.698 },
-  { latitude: 10.7862, longitude: 106.6962 },
-];
+const emptyCoordinates: Coordinate[] = [];
 
-export function MapPreview({ route, isLoading = false, error, fullScreen = false, mapType = 'standard', onPress }: MapPreviewProps) {
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, places = [] }: MapPreviewProps) {
   const { t } = useTranslation();
   const mapRef = useRef<MapView>(null);
   const coordinates = useMemo(
-    () => (route?.coordinates.length ? route.coordinates : fallbackCoordinates),
+    () => (route?.coordinates.length ? route.coordinates : emptyCoordinates),
     [route],
   );
   const start = coordinates[0];
@@ -49,9 +42,8 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
 
   return (
     <View style={[styles.container, fullScreen && styles.fullScreenContainer]}>
-      <MapView
+      {coordinates.length > 1 ? <MapView
         ref={mapRef}
-        mapType={mapType}
         onMapReady={fitRoute}
         pitchEnabled={false}
         rotateEnabled={false}
@@ -69,20 +61,8 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
         ) : null}
         <Marker coordinate={start} pinColor={colors.forest} />
         <Marker coordinate={end} pinColor={colors.accent} />
-      </MapView>
-      {onPress && !fullScreen ? (
-        <Pressable
-          accessibilityLabel={t('commute.openMap')}
-          accessibilityRole="button"
-          onPress={onPress}
-          style={styles.mapTapOverlay}
-        />
-      ) : null}
-      {onPress && !fullScreen ? (
-        <View pointerEvents="none" style={styles.expandHint}>
-          <Icon color={colors.forest} name="fullscreen" size={17} />
-        </View>
-      ) : null}
+        {places.map((place) => <Marker key={place.id} coordinate={place.coordinate} title={place.name} pinColor={colors.forest} />)}
+      </MapView> : null}
       <View style={styles.statusPill}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
         <Text style={styles.statusText}>{statusLabel}</Text>
@@ -108,24 +88,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
-  },
-  mapTapOverlay: {
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-  },
-  expandHint: {
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    position: 'absolute',
-    right: 10,
-    top: 10,
-    width: 32,
   },
   statusPill: {
     alignItems: 'center',

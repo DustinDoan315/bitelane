@@ -1,17 +1,16 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Icon } from '../components/Icon';
 import { MapPreview } from '../components/MapPreview';
-import { MapTypeFilter } from '../components/MapTypeFilter';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { colors, spacing } from '../theme';
-import type { CommutePreferences, MapType, RouteData } from '../types';
+import type { Journey, Place, RouteData } from '../types';
 
 type RouteMapScreenProps = {
-  commute: CommutePreferences;
+  journey: Journey;
+  places: Place[];
   error?: string | null;
   isLoading?: boolean;
   onBack: () => void;
@@ -19,20 +18,18 @@ type RouteMapScreenProps = {
   route: RouteData | null;
 };
 
-export function RouteMapScreen({ commute, error, isLoading = false, onBack, onRetry, route }: RouteMapScreenProps) {
+export function RouteMapScreen({ journey, places, error, isLoading = false, onBack, onRetry, route }: RouteMapScreenProps) {
   const { t } = useTranslation();
-  const [mapType, setMapType] = useState<MapType>('standard');
-  const [isMapFilterOpen, setIsMapFilterOpen] = useState(false);
   const routeMeta = route?.source === 'live'
-    ? `${t(`commute.${commute.mode}`)} · ${Math.max(1, Math.round(route.durationSeconds / 60))} min · ${(route.distanceMeters / 1000).toFixed(1)} km`
+    ? t('app.routeMeta', { minutes: Math.round(route.durationSeconds / 60), km: (route.distanceMeters / 1000).toFixed(1) })
     : t('commute.routeUnavailableMeta');
 
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
-      <MapPreview error={error} fullScreen isLoading={isLoading} mapType={mapType} route={route} />
+      <MapPreview error={error} fullScreen isLoading={isLoading} route={route} places={places} />
 
-      <View pointerEvents="box-none" style={styles.overlay}>
+      <View style={styles.overlay}>
         <View style={styles.topRow}>
           <Pressable
             accessibilityLabel={t('commute.closeMap')}
@@ -43,15 +40,6 @@ export function RouteMapScreen({ commute, error, isLoading = false, onBack, onRe
           >
             <Icon color={colors.text} name="arrow-left" size={23} />
           </Pressable>
-          <MapTypeFilter
-            onChange={(nextType) => {
-              setMapType(nextType);
-              setIsMapFilterOpen(false);
-            }}
-            onToggle={() => setIsMapFilterOpen((open) => !open)}
-            open={isMapFilterOpen}
-            value={mapType}
-          />
         </View>
         <View style={styles.titlePill}>
           <Icon color={colors.forest} name="map-marker-path" size={17} />
@@ -62,7 +50,7 @@ export function RouteMapScreen({ commute, error, isLoading = false, onBack, onRe
       <View style={styles.bottomCard}>
         <Text style={styles.eyebrow}>{t('commute.fullMapSubtitle')}</Text>
         <Text numberOfLines={1} style={styles.addresses}>
-          {commute.homeAddress} → {commute.workAddress}
+          {journey.origin.label} → {journey.destination.label}
         </Text>
         <Text style={styles.routeMeta}>{routeMeta}</Text>
         <PrimaryButton disabled={isLoading} iconName="refresh" labelKey="commute.refreshRoute" onPress={onRetry} />
@@ -82,11 +70,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
+    pointerEvents: 'box-none',
   },
   topRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   closeButton: {
     alignItems: 'center',

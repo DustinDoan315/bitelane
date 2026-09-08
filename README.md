@@ -1,40 +1,41 @@
 # BiteLane
 
-Expo React Native foundation for BiteLane: food recommendations that fit a user's route, budget, and mood.
+An Expo / React Native app for finding places to eat along a real journey. Web uses Leaflet; native uses `react-native-maps`.
 
-## Current slice
+## Run
 
-- Expo React Native TypeScript app shaped around the supplied BiteLane product screens
-- Food-goal and commute setup flows
-- Home daily-pick screen with commute card, route preview, featured recommendation, and Maps handoff
-- Saved/recent food memory screen
-- Feedback and alternative recommendation flows
-- Reusable buttons, rows, banners, map preview, meal cards, and icon wrapper
-- Editable commute fields with clear actions, keyboard-friendly focus, suggestions, and validation
-- Live route fetching through a typed route service, native map rendering on iOS/Android, and an SVG route fallback for web
-- In-memory commute, goal, and saved-meal state
-- English/Vietnamese localization with `i18next`, `react-i18next`, and device locale detection
-
-## Run locally
-
-```bash
-npm install
-npm run start
+```sh
+npm ci
+npm run web
+# or npm start for Expo
 ```
 
-Then press `i` for the iOS simulator, or scan the QR code with Expo Go.
+Start with **Set my route**. Search both locations (include city), select actual search results, and find places. There are no seeded meals, saved places, visits, or address coordinates. Tap a place for source information and an optional routed stop estimate. Hearts manage Saved; **I visited this place** writes a timestamped History entry. Language, route selections, filters, Saved, and History survive restarts on the same device.
 
-The initial language follows the device locale (`vi` uses Vietnamese; all other locales use English). Tap the avatar on the Home screen to switch between English and Vietnamese.
+## Data and configuration
 
-## Architecture boundary
+Development defaults: Photon geocoding, OSRM driving routes, Overpass OSM place queries, OSM web tiles. These are real data, but public services have limited capacity and no SLA. The public Nominatim API is no longer used. Native basemaps use the platform provider; an Android standalone release requires Google Maps SDK configuration and a restricted client key.
 
-The current recommendation data is mock data behind `src/data/mockRecommendations.ts`. Route data is fetched by `src/services/routeService.ts` using OpenStreetMap Nominatim + OSRM for this prototype, with a deterministic fallback when the provider is unavailable. Set `EXPO_PUBLIC_GEOCODER_URL` and `EXPO_PUBLIC_ROUTE_URL` to point at your Supabase Edge Function before production; the Expo client should hold only a Supabase session token and never contain Google server keys.
+See [.env.example](.env.example) for optional endpoint overrides. They expect Photon, OSRM, and Overpass-compatible response formats. Expo public variables are compiled into the client; **never put secret keys in them**. Configure managed/self-hosted endpoints or a backend gateway before release. Do not assume renaming a Google endpoint makes it protocol compatible. Rebuild after changing endpoint configuration.
 
-## Planned next slices
+Discovery is limited to road routes up to 40 km and venues within 750 m of the route. It ranks approximate geometric proximity, not driving detour. **Calculate this stop** fetches a route through the venue and compares driving duration. Estimates exclude live traffic and meal/parking time. There is no motorbike routing, verified open-now status, menu pricing, rating, or nutrition data. Unknown fields are labeled accordingly.
 
-1. Add Expo Router or React Navigation when navigation requirements grow.
-2. Replace mock route inputs with location search and permissions.
-3. Add Supabase Auth and an Edge Function recommendation API.
-4. Add Google Routes/Places provider calls only from the Edge Function.
-5. Persist saved meals, goals, and commute preferences locally and in Postgres.
-6. Add loading, offline, feedback, and error states.
+Requests have a 25-second timeout and in-flight deduplication. In-memory caches: addresses 24 hours, routes 5 minutes, places 15 minutes. Refresh can reuse that cache. No automatic retries, background location tracking, or synthetic fallback route. Local history and saved places are unencrypted device storage, not account sync.
+
+## Checks
+
+```sh
+npm run typecheck
+npm run verify:live -- "a public origin landmark, city" "a public destination landmark, city"
+npx expo export --platform web
+```
+
+The live check calls actual providers and has no response fixtures. Choose a short urban route with food coverage. Empty coverage, rate limiting, or provider downtime can fail it. UI checks should also verify empty states, edits invalidating selected coordinates, error/retry, Saved after reload, confirmed visits and undo, language switching, and directions targeting the selected venue.
+
+See [architecture](docs/architecture.md), [product review and roadmap](docs/product-plan.md), and [verification record](docs/verification.md).
+
+## Source policies
+
+- [Photon demo policy](https://github.com/komoot/photon): reasonable development usage; no availability guarantee.
+- [Overpass resource policy](https://dev.overpass-api.de/overpass-doc/en/preface/commons.html): shared capacity; provision a sustainable production backend.
+- [OSM tile policy](https://operations.osmfoundation.org/policies/tiles/) and [OSM attribution/license](https://www.openstreetmap.org/copyright).

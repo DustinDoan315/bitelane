@@ -1,32 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import 'leaflet/dist/leaflet.css';
 
-import { Icon } from './Icon';
 import { colors } from '../theme';
-import type { Coordinate, MapType, RouteData } from '../types';
+import type { Coordinate, Place, RouteData } from '../types';
 
 export type MapPreviewProps = {
   route?: RouteData | null;
   isLoading?: boolean;
   error?: string | null;
   fullScreen?: boolean;
-  mapType?: MapType;
-  onPress?: () => void;
+  places?: Place[];
 };
 
-const fallbackCoordinates: Coordinate[] = [
-  { latitude: 10.73287, longitude: 106.708003 },
-  { latitude: 10.7395, longitude: 106.704 },
-  { latitude: 10.755, longitude: 106.701 },
-  { latitude: 10.771, longitude: 106.698 },
-  { latitude: 10.7862, longitude: 106.6962 },
-];
+const emptyCoordinates: Coordinate[] = [];
+const emptyPlaces: Place[] = [];
 
 type LeafletModule = typeof import('leaflet');
 
-function WebMap({ coordinates, fullScreen, live, mapType }: { coordinates: Coordinate[]; fullScreen: boolean; live: boolean; mapType: MapType }) {
+function WebMap({ coordinates, fullScreen, live, places }: { coordinates: Coordinate[]; fullScreen: boolean; live: boolean; places: Place[] }) {
   const mapElementRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import('leaflet').Map | null>(null);
   const leafletRef = useRef<LeafletModule | null>(null);
@@ -35,6 +28,7 @@ function WebMap({ coordinates, fullScreen, live, mapType }: { coordinates: Coord
   const startRef = useRef<import('leaflet').CircleMarker | null>(null);
   const endRef = useRef<import('leaflet').CircleMarker | null>(null);
   const tileLayersRef = useRef<import('leaflet').TileLayer[]>([]);
+  const placesRef = useRef<import('leaflet').CircleMarker[]>([]);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -59,7 +53,9 @@ function WebMap({ coordinates, fullScreen, live, mapType }: { coordinates: Coord
       mapRef.current = map;
       leafletRef.current = leaflet;
       setIsReady(true);
-      window.setTimeout(() => map.invalidateSize(), 0);
+      const observer = new ResizeObserver(() => map.invalidateSize());
+      observer.observe(mapElementRef.current);
+      map.on('unload', () => observer.disconnect());
     });
 
     return () => {
@@ -80,30 +76,30 @@ function WebMap({ coordinates, fullScreen, live, mapType }: { coordinates: Coord
 
     tileLayersRef.current.forEach((layer) => layer.removeFrom(map));
 
-    const imageryLayer = mapType === 'standard'
-      ? leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors',
-          maxZoom: 19,
-        })
-      : leaflet.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-          attribution: 'Tiles &copy; Esri',
-          maxZoom: 19,
-        });
+    const imageryLayer = leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    });
 
     tileLayersRef.current = [imageryLayer];
     imageryLayer.addTo(map);
 
-    if (mapType === 'hybrid') {
-      const labelsLayer = leaflet.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        maxZoom: 20,
-        subdomains: 'abcd',
-      });
+  }, [isReady]);
 
-      tileLayersRef.current.push(labelsLayer);
-      labelsLayer.addTo(map);
-    }
-  }, [isReady, mapType]);
+  useEffect(() => {
+    const map = mapRef.current;
+    const leaflet = leafletRef.current;
+    if (!isReady || !map || !leaflet) return;
+    placesRef.current.forEach((marker) => marker.removeFrom(map));
+    placesRef.current = places.map((place) => {
+      // A DOM text node prevents map-provider names from becoming popup HTML.
+      const label = document.createElement('span');
+      label.textContent = place.name;
+      return leaflet.circleMarker([place.coordinate.latitude, place.coordinate.longitude], {
+        color: colors.white, fillColor: colors.forest, fillOpacity: 1, radius: 7, weight: 2,
+      }).bindPopup(label).addTo(map);
+    });
+  }, [places, isReady]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -174,11 +170,11 @@ function WebMap({ coordinates, fullScreen, live, mapType }: { coordinates: Coord
   return <div ref={mapElementRef} style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }} />;
 }
 
-export function MapPreview({ route, isLoading = false, error, fullScreen = false, mapType = 'standard', onPress }: MapPreviewProps) {
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, places = emptyPlaces }: MapPreviewProps) {
   const { t } = useTranslation();
   const live = route?.source === 'live';
   const coordinates = useMemo(
-    () => (route?.coordinates.length ? route.coordinates : fallbackCoordinates),
+    () => (route?.coordinates.length ? route.coordinates : emptyCoordinates),
     [route],
   );
   const statusLabel = isLoading
@@ -191,20 +187,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
 
   return (
     <View style={[styles.map, fullScreen && styles.fullScreenMap]}>
-      <WebMap coordinates={coordinates} fullScreen={fullScreen} live={live} mapType={mapType} />
-      {onPress && !fullScreen ? (
-        <Pressable
-          accessibilityLabel={t('commute.openMap')}
-          accessibilityRole="button"
-          onPress={onPress}
-          style={styles.mapTapOverlay}
-        />
-      ) : null}
-      {onPress && !fullScreen ? (
-        <View pointerEvents="none" style={styles.expandHint}>
-          <Icon color={colors.forest} name="fullscreen" size={17} />
-        </View>
-      ) : null}
+      {coordinates.length > 1 ? <WebMap coordinates={coordinates} fullScreen={fullScreen} live={live} places={places} /> : null}
       <View style={styles.statusPill}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
         <Text style={styles.statusText}>{statusLabel}</Text>
@@ -225,26 +208,6 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     flex: 1,
     height: undefined,
-  },
-  mapTapOverlay: {
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: 20,
-  },
-  expandHint: {
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    position: 'absolute',
-    right: 10,
-    top: 10,
-    width: 32,
-    zIndex: 21,
   },
   statusPill: {
     alignItems: 'center',

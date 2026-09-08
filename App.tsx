@@ -1,240 +1,67 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
-import { Linking, SafeAreaView, StyleSheet, View } from 'react-native';
-
-import i18n from './src/i18n';
-import { AlternativesScreen } from './src/screens/AlternativesScreen';
-import { FeedbackScreen } from './src/screens/FeedbackScreen';
-import { HomeScreen } from './src/screens/HomeScreen';
-import { MemoryScreen } from './src/screens/MemoryScreen';
-import { RouteMapScreen } from './src/screens/RouteMapScreen';
-import { SetupCommuteScreen } from './src/screens/SetupCommuteScreen';
-import { SetupGoalScreen } from './src/screens/SetupGoalScreen';
-import { alternativeMeals, featuredMeal, recentMeals, savedMeals } from './src/data/mockRecommendations';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, BackHandler, Linking, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import './src/i18n';
+import { useBiteLane } from './src/hooks/useBiteLane';
 import { BottomTabBar } from './src/components/BottomTabBar';
-import type { AppScreen, CommutePreferences, MainTab } from './src/types';
+import { DiscoverScreen } from './src/screens/DiscoverScreen';
+import { JourneySetupScreen } from './src/screens/JourneySetupScreen';
+import { LibraryScreen } from './src/screens/LibraryScreen';
+import { PlaceDetailsScreen } from './src/screens/PlaceDetailsScreen';
+import { RouteMapScreen } from './src/screens/RouteMapScreen';
+import type { MainTab, Place } from './src/types';
 import { colors } from './src/theme';
-import { getCommuteRoute, getFallbackRoute } from './src/services/routeService';
-import type { RouteData } from './src/types';
-
-const initialCommute: CommutePreferences = {
-  homeAddress: '123 Nguyễn Văn Linh, Quận 7',
-  workAddress: '18 Nguyễn Đình Chiểu, Quận 3',
-  mode: 'motorbike',
-};
 
 export default function App() {
-  const [screen, setScreen] = useState<AppScreen>('goal');
-  const [selectedTab, setSelectedTab] = useState<MainTab>('home');
-  const [commuteReturnScreen, setCommuteReturnScreen] = useState<'goal' | 'home'>('goal');
-  const [commute, setCommute] = useState<CommutePreferences>(initialCommute);
-  const [route, setRoute] = useState<RouteData>(() => getFallbackRoute(initialCommute));
-  const [routeError, setRouteError] = useState<string | null>(null);
-  const [isRouteLoading, setIsRouteLoading] = useState(true);
-  const routeRequestRef = useRef(0);
-  const [savedMealIds, setSavedMealIds] = useState<Set<string>>(
-    () => new Set(savedMeals.map((meal) => meal.id)),
-  );
-
-  const saved = useMemo(
-    () => [...savedMeals, featuredMeal].filter((meal) => savedMealIds.has(meal.id)),
-    [savedMealIds],
-  );
-
-  const updateCommute = <Key extends keyof CommutePreferences>(
-    key: Key,
-    value: CommutePreferences[Key],
-  ) => {
-    setCommute((current) => ({ ...current, [key]: value }));
-  };
-
-  const selectTab = (tab: MainTab) => {
-    setSelectedTab(tab);
-    setScreen(tab);
-  };
-
-  const toggleSaved = (mealId: string) => {
-    setSavedMealIds((current) => {
-      const next = new Set(current);
-
-      if (next.has(mealId)) {
-        next.delete(mealId);
-      } else {
-        next.add(mealId);
-      }
-
-      return next;
-    });
-  };
-
-  const toggleLanguage = () => {
-    void i18n.changeLanguage(i18n.resolvedLanguage === 'vi' ? 'en' : 'vi');
-  };
-
-  const refreshRoute = async (nextCommute: CommutePreferences) => {
-    const requestId = routeRequestRef.current + 1;
-    routeRequestRef.current = requestId;
-    setIsRouteLoading(true);
-    setRouteError(null);
-
-    try {
-      const nextRoute = await getCommuteRoute(nextCommute);
-
-      if (requestId !== routeRequestRef.current) {
-        return;
-      }
-
-      setRoute(nextRoute);
-    } catch (error) {
-      if (requestId !== routeRequestRef.current) {
-        return;
-      }
-
-      setRoute(getFallbackRoute(nextCommute));
-      setRouteError(error instanceof Error ? error.message : 'Unable to update route.');
-    } finally {
-      if (requestId === routeRequestRef.current) {
-        setIsRouteLoading(false);
-      }
-    }
-  };
-
+  const app = useBiteLane();
+  const { t } = useTranslation();
+  const [tab, setTab] = useState<MainTab>('home');
+  const [overlay, setOverlay] = useState<'setup' | 'map' | null>(null);
+  const [place, setPlace] = useState<Place | null>(null);
   useEffect(() => {
-    void refreshRoute(initialCommute);
-  }, []);
-
-  if (screen === 'goal') {
-    return (
-      <SetupGoalScreen
-        onContinue={() => {
-          setCommuteReturnScreen('goal');
-          setScreen('commute');
-        }}
-        onSkip={() => setScreen('home')}
-      />
-    );
-  }
-
-  if (screen === 'commute') {
-    return (
-      <SetupCommuteScreen
-        onBack={() => setScreen(commuteReturnScreen)}
-        onChange={updateCommute}
-        onSave={async (nextCommute) => {
-          setCommute(nextCommute);
-          await refreshRoute(nextCommute);
-          setScreen('home');
-        }}
-        preferences={commute}
-        route={route}
-        routeError={routeError}
-        isSaving={isRouteLoading}
-      />
-    );
-  }
-
-  let content: ReactNode = null;
-
-  switch (screen) {
-    case 'home':
-      content = (
-        <HomeScreen
-          commute={commute}
-          featuredMeal={featuredMeal}
-          isFeaturedSaved={savedMealIds.has(featuredMeal.id)}
-          isRouteLoading={isRouteLoading}
-          onEditCommute={() => {
-            setCommuteReturnScreen('home');
-            setScreen('commute');
-          }}
-          onOpenMap={() => setScreen('routeMap')}
-          onNavigate={() => {
-            void Linking.openURL(
-              `https://maps.apple.com/?daddr=${encodeURIComponent(commute.workAddress)}`,
-            );
-          }}
-          onToggleFeaturedSaved={() => toggleSaved(featuredMeal.id)}
-          onToggleLanguage={toggleLanguage}
-          onTryAnother={() => setScreen('feedback')}
-          route={route}
-          routeError={routeError}
-        />
-      );
-      break;
-    case 'routeMap':
-      content = (
-        <RouteMapScreen
-          commute={commute}
-          error={routeError}
-          isLoading={isRouteLoading}
-          onBack={() => setScreen('home')}
-          onRetry={() => {
-            void refreshRoute(commute);
-          }}
-          route={route}
-        />
-      );
-      break;
-    case 'history':
-      content = (
-        <MemoryScreen
-          onOpenPicker={() => selectTab('home')}
-          recentMeals={recentMeals}
-          savedMeals={saved}
-          segment="recent"
-        />
-      );
-      break;
-    case 'saved':
-      content = (
-        <MemoryScreen
-          onOpenPicker={() => selectTab('home')}
-          onToggleSaved={toggleSaved}
-          recentMeals={recentMeals}
-          savedMeals={saved}
-          segment="saved"
-        />
-      );
-      break;
-    case 'alternatives':
-      content = (
-        <AlternativesScreen
-          meals={alternativeMeals}
-          onBack={() => setScreen('feedback')}
-          onBackToPick={() => setScreen('home')}
-        />
-      );
-      break;
-    case 'feedback':
-      content = (
-        <FeedbackScreen
-          onClose={() => setScreen('home')}
-          onShowBetter={() => setScreen('alternatives')}
-        />
-      );
-      break;
-    default:
-      content = null;
-  }
-
-  const showTabBar = screen === 'home' || screen === 'history' || screen === 'saved';
-
-  return (
-    <SafeAreaView style={styles.app}>
-      <StatusBar style="dark" />
-      <View style={styles.content}>{content}</View>
-      {showTabBar ? <BottomTabBar selectedTab={selectedTab} onSelect={selectTab} /> : null}
-    </SafeAreaView>
-  );
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (place) { setPlace(null); return true; }
+      if (overlay) { setOverlay(null); return true; }
+      if (tab !== 'home') { setTab('home'); return true; }
+      return false;
+    });
+    return () => subscription.remove();
+  }, [place, overlay, tab]);
+  const retry = () => { if (app.state.journey) void app.refresh(app.state.journey); };
+  const saved = (target: Place) => app.state.saved.some((p) => p.id === target.id);
+  return <SafeAreaView style={styles.safe}>
+    <StatusBar style="dark" />
+    <View style={styles.app}>
+      <View style={styles.header}>
+        <Text style={styles.logo}>BiteLane<Text style={{ color: colors.accent }}>.</Text></Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('app.changeLanguage')} style={styles.language} onPress={() => app.setState((s) => ({ ...s, language: s.language === 'en' ? 'vi' : 'en' }))}>
+          <Text style={styles.languageText}>{app.state.language === 'en' ? 'Tiếng Việt' : 'English'}</Text>
+        </Pressable>
+      </View>
+      {app.storageError ? <Text accessibilityRole="alert" style={styles.notice}>{t('app.errors.storageError')}</Text> : null}
+      <View style={styles.content}>
+        {!app.ready ? <ActivityIndicator style={{ flex: 1 }} color={colors.forest} />
+          : place ? <PlaceDetailsScreen key={place.id} place={place} journey={app.state.journey} baseRoute={app.route} saved={saved(place)} onSave={() => app.toggleSaved(place)} onVisit={() => app.recordVisit(place)} onBack={() => setPlace(null)} />
+          : overlay === 'setup' ? <JourneySetupScreen journey={app.state.journey} onBack={() => setOverlay(null)} onSave={(journey) => { app.setState((s) => ({ ...s, journey })); setOverlay(null); setTab('home'); }} />
+          : overlay === 'map' && app.state.journey ? <RouteMapScreen journey={app.state.journey} places={app.visible.slice(0, 30).map((c) => c.place)} route={app.route} error={app.error} isLoading={app.phase !== 'idle'} onBack={() => setOverlay(null)} onRetry={retry} />
+          : tab === 'home' ? <DiscoverScreen journey={app.state.journey} route={app.route} candidates={app.visible} phase={app.phase} error={app.error}
+            preferences={app.state.preferences} onPreferences={(preferences) => app.setState((s) => ({ ...s, preferences }))} saved={app.state.saved}
+            onSetup={() => setOverlay('setup')} onRetry={retry} onMap={() => setOverlay('map')} onOpen={setPlace} onSave={app.toggleSaved} />
+          : <LibraryScreen kind={tab} saved={app.state.saved} visits={app.state.visits} onOpen={setPlace} onSave={app.toggleSaved} onDiscover={() => setTab('home')}
+            onRemoveVisit={(id) => app.setState((s) => ({ ...s, visits: s.visits.filter((v) => v.id !== id) }))} />}
+      </View>
+      <Pressable accessibilityRole="link" onPress={() => { void Linking.openURL('https://www.openstreetmap.org/copyright').catch(() => {}); }} style={styles.attribution}>
+        <Text style={styles.attributionText}>© OpenStreetMap contributors · ODbL</Text>
+      </Pressable>
+      {!place && !overlay && app.ready ? <BottomTabBar selectedTab={tab} onSelect={setTab} /> : null}
+    </View>
+  </SafeAreaView>;
 }
-
 const styles = StyleSheet.create({
-  app: {
-    backgroundColor: colors.background,
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-  },
+  safe: { flex: 1, backgroundColor: colors.background }, app: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center' },
+  content: { flex: 1 }, header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 10 },
+  logo: { color: colors.forest, fontSize: 25, fontWeight: '800' }, language: { padding: 12, minHeight: 44 }, languageText: { color: colors.forest, fontWeight: '600' },
+  attribution: { alignItems: 'center', padding: 8 }, attributionText: { fontSize: 10, color: colors.secondaryText },
+  notice: { color: colors.accent, padding: 12, fontSize: 13 },
 });

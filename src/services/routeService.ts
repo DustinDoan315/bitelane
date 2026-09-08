@@ -1,180 +1,39 @@
-import type { CommutePreferences, Coordinate, RouteData } from '../types';
+import type { AddressSuggestion, Coordinate, Journey, RouteData } from '../types';
+import { cachedRequest } from './transport';
+import { isCoordinate } from './validation';
 
-const geocoderUrl = process.env.EXPO_PUBLIC_GEOCODER_URL ?? 'https://nominatim.openstreetmap.org/search';
+const geocoderUrl = process.env.EXPO_PUBLIC_PHOTON_URL ?? 'https://photon.komoot.io/api/';
 const routeUrl = process.env.EXPO_PUBLIC_ROUTE_URL ?? 'https://router.project-osrm.org/route/v1/driving';
 
-const defaultHome: Coordinate = { latitude: 10.73287, longitude: 106.708003 };
-const defaultWork: Coordinate = { latitude: 10.7862, longitude: 106.6962 };
-
-const knownLocations: Record<string, Coordinate> = {
-  '123 nguyen van linh quan 7': defaultHome,
-  '18 nguyen dinh chieu quan 3': defaultWork,
-};
-
-export function getKnownAddressCoordinate(address: string): Coordinate | undefined {
-  return knownLocations[normalizeAddress(address)];
-}
-
-type NominatimResult = { lat?: string; lon?: string };
-
-export type AddressSuggestion = {
-  id: string;
-  label: string;
-  coordinate?: Coordinate;
-};
-
-function normalizeAddress(address: string) {
-  return address
-    .trim()
-    .toLocaleLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
-
-async function fetchWithTimeout(url: string, init?: RequestInit, timeoutMs = 9000) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function resolveAddress(address: string): Promise<Coordinate | null> {
-  const normalized = normalizeAddress(address);
-  const known = knownLocations[normalized];
-
-  if (known) {
-    return known;
-  }
-
-  if (normalized.length < 3) {
-    return null;
-  }
-
-  const query = `${address}, Ho Chi Minh City, Vietnam`;
-  const response = await fetchWithTimeout(
-    `${geocoderUrl}?format=jsonv2&limit=1&countrycodes=vn&q=${encodeURIComponent(query)}`,
-    { headers: { Accept: 'application/json' } },
-  );
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const results = (await response.json()) as NominatimResult[];
-  const result = results[0];
-  const latitude = Number(result?.lat);
-  const longitude = Number(result?.lon);
-
-  return Number.isFinite(latitude) && Number.isFinite(longitude) ? { latitude, longitude } : null;
-}
-
+/** Explicit user search only; no background geocoding of stored addresses. */
 export async function searchAddresses(query: string): Promise<AddressSuggestion[]> {
-  if (normalizeAddress(query).length < 3) {
-    return [];
+  if (query.trim().length < 3) return [];
+  const payload = await cachedRequest(`${geocoderUrl}?limit=5&q=${encodeURIComponent(query.trim())}`, 86400000);
+  if (!payload || !Array.isArray(payload.features)) throw new Error('invalidResponse');
+  const results: AddressSuggestion[] = [];
+  for (const feature of payload.features) {
+    const [longitude, latitude] = feature.geometry?.coordinates ?? [];
+    const coordinate = { latitude, longitude };
+    const p = feature.properties;
+    if (!isCoordinate(coordinate) || !p) continue;
+    const label = [...new Set([p.name, [p.housenumber, p.street].filter(Boolean).join(' '), p.city, p.state, p.country]
+      .filter((part): part is string => typeof part === 'string' && !!part.trim()))].join(', ');
+    if (label) results.push({ id: `${p.osm_type}/${p.osm_id}/${latitude}/${longitude}`, label, coordinate });
   }
-
-  const searchQuery = `${query}, Ho Chi Minh City, Vietnam`;
-  const response = await fetchWithTimeout(
-    `${geocoderUrl}?format=jsonv2&limit=5&countrycodes=vn&q=${encodeURIComponent(searchQuery)}`,
-    { headers: { Accept: 'application/json' } },
-  );
-
-  if (!response.ok) {
-    return [];
-  }
-
-  const results = (await response.json()) as Array<NominatimResult & { display_name?: string; place_id?: number }>;
-
-  return results.flatMap((result, index) => {
-    const label = result.display_name?.trim();
-    const latitude = Number(result.lat);
-    const longitude = Number(result.lon);
-
-    if (!label || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-      return [];
-    }
-
-    return [{
-      id: String(result.place_id ?? `${label}-${index}`),
-      label,
-      coordinate: { latitude, longitude },
-    }];
-  });
+  return results;
 }
 
-function toCoordinates(value: unknown): Coordinate[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.flatMap((point) => {
-    if (!Array.isArray(point) || point.length < 2) {
-      return [];
-    }
-
-    const longitude = Number(point[0]);
-    const latitude = Number(point[1]);
-
-    return Number.isFinite(latitude) && Number.isFinite(longitude) ? [{ latitude, longitude }] : [];
-  });
+export async function getRoute(points: Coordinate[]): Promise<RouteData> {
+  if (points.length < 2 || points.some((point) => !isCoordinate(point))) throw new Error('selectAddresses');
+  const path = points.map((p) => `${p.longitude},${p.latitude}`).join(';');
+  const payload = await cachedRequest(`${routeUrl}/${path}?overview=full&geometries=geojson`, 300000);
+  const route = payload?.routes?.[0];
+  if (payload?.code !== 'Ok' || !route || !Array.isArray(route.geometry?.coordinates)
+    || !Number.isFinite(route.distance) || route.distance < 0 || !Number.isFinite(route.duration) || route.duration < 0) throw new Error('noRoute');
+  const coordinates: Coordinate[] = route.geometry.coordinates.map(([longitude, latitude]: number[]) => ({ latitude, longitude }));
+  if (coordinates.length < 2 || coordinates.some((p) => !isCoordinate(p))) throw new Error('invalidResponse');
+  return { coordinates, distanceMeters: route.distance, durationSeconds: route.duration, source: 'live' };
 }
-
-export function getFallbackRoute(preferences: CommutePreferences): RouteData {
-  const origin = preferences.homeCoordinate ?? getKnownAddressCoordinate(preferences.homeAddress) ?? defaultHome;
-  const destination = preferences.workCoordinate ?? getKnownAddressCoordinate(preferences.workAddress) ?? defaultWork;
-
-  return {
-    coordinates: [origin, destination],
-    source: 'fallback',
-  };
-}
-
-export async function getCommuteRoute(preferences: CommutePreferences): Promise<RouteData> {
-  const [origin, destination] = await Promise.all([
-    preferences.homeCoordinate ?? resolveAddress(preferences.homeAddress),
-    preferences.workCoordinate ?? resolveAddress(preferences.workAddress),
-  ]);
-
-  if (!origin || !destination) {
-    throw new Error('Unable to find one or both addresses.');
-  }
-
-  const response = await fetchWithTimeout(
-    `${routeUrl}/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson`,
-  );
-
-  if (!response.ok) {
-    throw new Error('The route service is unavailable.');
-  }
-
-  const payload = (await response.json()) as {
-    routes?: Array<{
-      distance?: number;
-      duration?: number;
-      geometry?: { coordinates?: unknown };
-    }>;
-  };
-  const route = payload.routes?.[0];
-  const coordinates = toCoordinates(route?.geometry?.coordinates);
-
-  if (!route || coordinates.length < 2 || !Number.isFinite(route.distance) || !Number.isFinite(route.duration)) {
-    throw new Error('The route service returned an invalid route.');
-  }
-
-  const distanceMeters = route.distance as number;
-  const durationSeconds = route.duration as number;
-
-  return {
-    coordinates,
-    distanceMeters,
-    durationSeconds,
-    source: 'live',
-  };
+export function getCommuteRoute(journey: Journey) {
+  return getRoute([journey.origin.coordinate, journey.destination.coordinate]);
 }
