@@ -10,8 +10,8 @@ The prior app displayed static meals, prices, ratings, detours, and yesterday's 
 
 ## Implemented in this revision
 
-- Discover: explicit address search and selection, a real road route, named OSM restaurants/cafés/quick-food places within 750 m of the route, ordered by distance to the route.
-- Filters: vegetarian options explicitly tagged by contributors; hide user-confirmed visited places. No inferred nutrition, budget, rating, or open-now claims.
+- Discover: explicit address search and selection, a real road route, and food-to-store matches from local price reports. The full route map remains available separately instead of repeating an unpriced venue directory.
+- Filters: vegetarian options explicitly tagged by contributors; hide user-confirmed visited places. Budget matching now supports per-person limits and dish queries against local user-entered price reports, while keeping those reports explicitly unverified.
 - Place details: available cuisine/address/raw opening-hours information, source and retrieval time, optional routing through the stop, and directions to the actual place coordinate.
 - Saved: persistent future shortlist with add/remove and detail access.
 - History: persistent, dated, user-confirmed visits; reversible mistaken entries. Navigation clicks do not imply eating.
@@ -26,9 +26,10 @@ Discovery currently uses car routing, without traffic. Motorbike routing is esse
 1. Select managed geocoding, local place coverage, and motorbike routing providers. Evaluate at least several actual commute corridors with local users; compare returned locations, entrances, opening hours, duplicate listings, and legal road access.
 2. Introduce a backend provider gateway with server-side credentials, shared caching, rate limits, budgets, monitoring, and licensed data retention. Replace development endpoints and validate CORS/native credentials. Public community servers are not the production backend.
 3. Add current-location permission and map-pin selection for hard-to-geocode addresses. Keep manual landmark entry available and avoid unsolicited background location collection.
-4. Add provider-verified opening status and prices only when available. Rank a small candidate set by routed detour; let users choose a detour limit. Clearly separate missing data from a negative preference match.
-5. Add opt-in account sync, deletion/export, and offline library behavior. Current persistence is device-local and unencrypted; no account recovery or cross-device sync.
-6. Validate on physical iOS/Android devices, including keyboard, permission denial, slow network, Android map configuration, and screen readers. Add automated critical-path coverage and a monitored staging environment.
+4. Replace local-only reports with a merchant or licensed menu catalog. Model each result as food item → price → merchant → source timestamp, and only call a result verified when the source supports that claim. Reviews can enrich a result but cannot become the price source on their own.
+5. Add provider-verified opening status and prices only when available. Rank a small candidate set by routed detour; let users choose a detour limit. Clearly separate missing data from a negative preference match.
+6. Add opt-in account sync, deletion/export, and offline library behavior. Current persistence is device-local and unencrypted; no account recovery or cross-device sync.
+7. Validate on physical iOS/Android devices, including keyboard, permission denial, slow network, Android map configuration, and screen readers. Add automated critical-path coverage and a monitored staging environment.
 
 ## Measure before adding a paywall
 

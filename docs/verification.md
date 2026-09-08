@@ -17,6 +17,8 @@ Date: 2026-09-08 (Asia/Ho_Chi_Minh)
 - Selected journey loaded real venue cards; the full route map opened through its explicit action.
 - Clear full-map button opened a fitted road route at mobile width; the old transparent map interaction was found unreliable and replaced. Unconfigured satellite/CARTO layers were removed.
 - Place details showed only available fields, source timestamp, source link, and unknown-price text.
+- Budget settings accepted a per-person limit and optional dish query. Results stayed unchanged while fields were edited and changed only after applying the budget. A real local report for Cơm tấm at 45,000₫ appeared under a 50k budget, disappeared at 30k, and returned after reload; the result showed the dish, price, mapped venue, and unverified report label.
+- Discover now shows only priced food matches; the former Nearby venues directory is removed. Selecting the Cơm tấm result opens a food/store detail view with the dish, reported price, venue identity, address, map, directions, save, visit, and price-report actions.
 - Calculate-stop returned a route through the selected venue and displayed the difference from the base route.
 - Save changed the control state; Saved retained the venue after a full browser reload.
 - Confirm visit created one timestamped History event; History retained it after reload; undo restored the empty state.
@@ -25,7 +27,7 @@ Date: 2026-09-08 (Asia/Ho_Chi_Minh)
 
 ## Security and dependency review
 
-Provider payloads are converted to a small domain schema and validated again on storage hydration. Place names in Leaflet popups are assigned as text nodes. Provider requests time out, cache briefly, and deduplicate in-flight requests. External navigation uses validated coordinates rather than provider URLs. No secret is present in Expo public configuration.
+Provider payloads are converted to a small domain schema and validated again on storage hydration. Place names in Leaflet popups are assigned as text nodes. Provider requests time out, cache briefly, and deduplicate in-flight requests. External navigation uses validated coordinates rather than provider URLs. Budget reports are explicitly local user input, capped and validated, and never presented as verified menus. No secret is present in Expo public configuration.
 
 `npm audit --omit=dev` reports 10 moderate advisories through Expo's `xcode` → `uuid` native build-tool chain. npm's offered forced resolution downgrades Expo to 46, so it was not applied. Track the upstream Expo dependency update; this finding is not code shipped in the browser bundle, but it is part of the local/native build toolchain.
 

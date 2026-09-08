@@ -16,12 +16,24 @@ export type Place = {
   fetchedAt: string;
 };
 export type Candidate = { place: Place; distanceFromRouteMeters: number };
+export type BudgetSettings = { maxVndPerPerson: number; dishQuery: string };
+export type MenuReport = {
+  id: string;
+  placeId: string;
+  itemName: string;
+  priceVnd: number;
+  reportedAt: string;
+  source: 'user_report';
+};
+export type FoodOffer = MenuReport & { place: Place; distanceFromRouteMeters: number };
 export type Visit = { id: string; place: Place; visitedAt: string };
 export type Preferences = { vegetarianOnly: boolean; hideVisited: boolean };
 export type StoredState = {
-  version: 1;
+  version: 2;
   journey: Journey | null;
   preferences: Preferences;
+  budget: BudgetSettings;
+  reports: MenuReport[];
   saved: Place[];
   visits: Visit[];
   language: 'en' | 'vi';

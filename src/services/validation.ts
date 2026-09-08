@@ -1,4 +1,4 @@
-import type { AddressSuggestion, Coordinate, Journey, Place, StoredState, Visit } from '../types';
+import type { AddressSuggestion, BudgetSettings, Coordinate, Journey, MenuReport, Place, StoredState, Visit } from '../types';
 
 export function isCoordinate(value: unknown): value is Coordinate {
   if (!value || typeof value !== 'object') return false;
@@ -26,12 +26,34 @@ function isPlace(value: unknown): value is Place {
     && p.sourceUrl === `https://www.openstreetmap.org/${p.id}`
     && [p.address, p.cuisine, p.openingHours].every((x) => x === undefined || typeof x === 'string');
 }
+const defaultBudget: BudgetSettings = { maxVndPerPerson: 50000, dishQuery: '' };
+function isBudget(value: unknown): value is BudgetSettings {
+  if (!value || typeof value !== 'object') return false;
+  const p = value as BudgetSettings;
+  return Number.isInteger(p.maxVndPerPerson) && p.maxVndPerPerson > 0 && p.maxVndPerPerson <= 10000000
+    && typeof p.dishQuery === 'string' && p.dishQuery.length <= 80;
+}
+function isMenuReport(value: unknown): value is MenuReport {
+  if (!value || typeof value !== 'object') return false;
+  const p = value as MenuReport;
+  return typeof p.id === 'string' && !!p.id && typeof p.placeId === 'string' && /^(node|way|relation)\/\d+$/.test(p.placeId)
+    && typeof p.itemName === 'string' && p.itemName.trim().length > 0 && p.itemName.length <= 120
+    && Number.isInteger(p.priceVnd) && p.priceVnd > 0 && p.priceVnd <= 10000000
+    && p.source === 'user_report' && Number.isFinite(Date.parse(p.reportedAt));
+}
+function hasValidCoreState(value: Omit<StoredState, 'version'> & { version?: number }): boolean {
+  return (value.journey !== null && !isJourney(value.journey))
+    || !Array.isArray(value.saved) || !value.saved.every(isPlace) || !Array.isArray(value.visits)
+    || !value.visits.every((v: Visit) => v && typeof v.id === 'string' && isPlace(v.place) && Number.isFinite(Date.parse(v.visitedAt)))
+    || typeof value.preferences?.vegetarianOnly !== 'boolean' || typeof value.preferences?.hideVisited !== 'boolean'
+    || !['en', 'vi'].includes(value.language) ? false : true;
+}
 export function parseStoredState(raw: string): StoredState {
-  const p = JSON.parse(raw) as StoredState;
-  if (p?.version !== 1 || (p.journey !== null && !isJourney(p.journey))
-    || !Array.isArray(p.saved) || !p.saved.every(isPlace) || !Array.isArray(p.visits)
-    || !p.visits.every((v: Visit) => v && typeof v.id === 'string' && isPlace(v.place) && Number.isFinite(Date.parse(v.visitedAt)))
-    || typeof p.preferences?.vegetarianOnly !== 'boolean' || typeof p.preferences?.hideVisited !== 'boolean'
-    || !['en', 'vi'].includes(p.language)) throw new Error('storageError');
-  return p;
+  const p = JSON.parse(raw) as Omit<StoredState, 'version'> & { version?: number };
+  if (p?.version === 1) {
+    if (!hasValidCoreState(p)) throw new Error('storageError');
+    return { ...p, version: 2, budget: defaultBudget, reports: [] } as StoredState;
+  }
+  if (p?.version !== 2 || !hasValidCoreState(p) || !isBudget(p.budget) || !Array.isArray(p.reports) || !p.reports.every(isMenuReport)) throw new Error('storageError');
+  return p as StoredState;
 }

@@ -1,14 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import i18n from '../i18n';
-import type { Candidate, Journey, Place, RouteData, StoredState } from '../types';
+import type { BudgetSettings, Candidate, Journey, Place, RouteData, StoredState } from '../types';
 import { findPlaces } from '../services/placeService';
+import { findFoodOffers } from '../services/menuService';
 import { getCommuteRoute } from '../services/routeService';
 import { parseStoredState } from '../services/validation';
 
 const STORAGE_KEY = 'bitelane:v1';
 const initialState = (): StoredState => ({
-  version: 1, journey: null, preferences: { vegetarianOnly: false, hideVisited: false }, saved: [], visits: [],
+  version: 2, journey: null, preferences: { vegetarianOnly: false, hideVisited: false },
+  budget: { maxVndPerPerson: 50000, dishQuery: '' }, reports: [], saved: [], visits: [],
   language: i18n.resolvedLanguage === 'vi' ? 'vi' : 'en',
 });
 
@@ -69,6 +71,7 @@ export function useBiteLane() {
     return candidates.filter(({ place }) => (!state.preferences.vegetarianOnly || place.vegetarian)
       && (!state.preferences.hideVisited || !visited.has(place.id)));
   }, [candidates, state.preferences, state.visits]);
+  const offers = useMemo(() => findFoodOffers(visible, state.reports, state.budget), [visible, state.reports, state.budget]);
 
   const toggleSaved = (place: Place) => setState((current) => ({ ...current,
     saved: current.saved.some((p) => p.id === place.id) ? current.saved.filter((p) => p.id !== place.id) : [place, ...current.saved],
@@ -80,6 +83,11 @@ export function useBiteLane() {
     const visitedAt = new Date().toISOString();
     return { ...current, visits: [{ id: `${place.id}/${visitedAt}`, place, visitedAt }, ...current.visits] };
   });
+  const addMenuReport = (place: Place, itemName: string, priceVnd: number) => setState((current) => ({
+    ...current,
+    reports: [{ id: `${place.id}/${Date.now()}`, placeId: place.id, itemName: itemName.trim(), priceVnd, reportedAt: new Date().toISOString(), source: 'user_report' }, ...current.reports],
+  }));
 
-  return { state, setState, ready, storageError, route, visible, phase, error, refresh, toggleSaved, recordVisit };
+  const setBudget = (budget: BudgetSettings) => setState((current) => ({ ...current, budget }));
+  return { state, setState, ready, storageError, route, visible, offers, phase, error, refresh, toggleSaved, recordVisit, addMenuReport, setBudget };
 }

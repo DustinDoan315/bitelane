@@ -20,14 +20,14 @@
 
 ## Persistence
 
-AsyncStorage key `bitelane:v1` stores versioned `StoredState`: selected journey, language, meaningful filters, saved place snapshots, and timestamped confirmed visits. Runtime validation checks coordinates, provider IDs, source URLs, and dates on load. Writes are serialized to prevent older writes finishing after newer writes. Place retrieval timestamps are distinct from visit timestamps. In-memory provider caches are deliberately not persisted.
+AsyncStorage key `bitelane:v1` stores versioned `StoredState` schema version 2: selected journey, language, meaningful filters, applied per-person budget and dish query, local menu price reports, saved place snapshots, and timestamped confirmed visits. Version 1 records migrate with default budget settings and no reports. Runtime validation checks coordinates, provider IDs, source URLs, report prices, and dates on load. Budget fields are edited as a draft and persisted only when the user applies them. Writes are serialized to prevent older writes finishing after newer writes. Place retrieval timestamps are distinct from visit timestamps. In-memory provider caches are deliberately not persisted.
 
 ## UI boundaries
 
-- Discover: setup/route summary → budget/data status → filters → proximity-ranked results, with the full route map behind an explicit action.
+- Discover: setup/route summary → per-person budget and dish query → explicit local food-price matches → filters → food-to-store detail. The full route map remains behind an explicit action; Discover does not repeat a separate venue directory.
 - Saved: intentions; saved place snapshots with detail access and unsave.
 - History: user-confirmed events, with timestamps and reversible mistakes.
-- Detail: available source fields, directions, calculate-stop, save, confirm visit.
+- Detail: available source fields, directions, calculate-stop, save, confirm visit, and a local unverified price-report form.
 - Web map: dynamic Leaflet, one clearly attributed OSM layer, real geometry, text-safe place popups, and resize handling.
 - Native map: platform map provider, real geometry and venue markers. No fake initial coordinates.
 
@@ -35,4 +35,4 @@ AsyncStorage key `bitelane:v1` stores versioned `StoredState`: selected journey,
 
 The three public development endpoints must be replaced by managed or self-hosted capacity. A server gateway should own credentials, shared quotas, caching/licensing, telemetry, and provider adapters. Add authentication only when implementing account sync or other account features. Define RLS and retention if a relational store is selected. No Supabase project, billing account, backend deployment, or paid service has been provisioned by this refactor.
 
-Routing supports driving only. A future provider must supply an actual motorbike profile before exposing that choice. Prices and opening status need a richer licensed source. See the product plan for priorities and release gates.
+Routing supports driving only. A future provider must supply an actual motorbike profile before exposing that choice. Local reports make the budget flow testable, but merchant or licensed menu data is required before promising verified availability or shared results. See the product plan for priorities and release gates.

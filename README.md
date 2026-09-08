@@ -10,7 +10,7 @@ npm run web
 # or npm start for Expo
 ```
 
-Start with **Set my route**. Search both locations (include city), select actual search results, and find places. There are no seeded meals, saved places, visits, or address coordinates. Tap a place for source information and an optional routed stop estimate. Hearts manage Saved; **I visited this place** writes a timestamped History entry. Language, route selections, filters, Saved, and History survive restarts on the same device.
+Start with **Set my route**. Search both locations (include city), select actual search results, and find places. Set a per-person meal budget and optional dish query to match local price reports. Open a venue to add a price you actually saw; these reports are stored on this device and labeled unverified until a merchant or licensed menu source is connected. Tap a place for source information and an optional routed stop estimate. Hearts manage Saved; **I visited this place** writes a timestamped History entry. Language, route selections, filters, budget, price reports, Saved, and History survive restarts on the same device.
 
 ## Data and configuration
 
@@ -18,7 +18,7 @@ Development defaults: Photon geocoding, OSRM driving routes, Overpass OSM place 
 
 See [.env.example](.env.example) for optional endpoint overrides. They expect Photon, OSRM, and Overpass-compatible response formats. Expo public variables are compiled into the client; **never put secret keys in them**. Configure managed/self-hosted endpoints or a backend gateway before release. Do not assume renaming a Google endpoint makes it protocol compatible. Rebuild after changing endpoint configuration.
 
-Discovery is limited to road routes up to 40 km and venues within 750 m of the route. It ranks approximate geometric proximity, not driving detour. **Calculate this stop** fetches a route through the venue and compares driving duration. Estimates exclude live traffic and meal/parking time. There is no motorbike routing, verified open-now status, menu pricing, rating, or nutrition data. Unknown fields are labeled accordingly.
+Discovery is limited to road routes up to 40 km and venues within 750 m of the route. It ranks approximate geometric proximity, not driving detour. **Calculate this stop** fetches a route through the venue and compares driving duration. Estimates exclude live traffic and meal/parking time. Budget results currently use only user-entered local price reports; they are not verified menus and are not shared between users. There is no motorbike routing, verified open-now status, licensed menu pricing, rating, or nutrition data. Unknown fields are labeled accordingly.
 
 Requests have a 25-second timeout and in-flight deduplication. In-memory caches: addresses 24 hours, routes 5 minutes, places 15 minutes. Refresh can reuse that cache. No automatic retries, background location tracking, or synthetic fallback route. Local history and saved places are unencrypted device storage, not account sync.
 
