@@ -12,6 +12,7 @@ export type MapPreviewProps = {
   error?: string | null;
   fullScreen?: boolean;
   places?: Place[];
+  onPlacePress?: (place: Place) => void;
 };
 
 const emptyCoordinates: Coordinate[] = [];
@@ -19,7 +20,7 @@ const emptyPlaces: Place[] = [];
 
 type LeafletModule = typeof import('leaflet');
 
-function WebMap({ coordinates, fullScreen, live, places }: { coordinates: Coordinate[]; fullScreen: boolean; live: boolean; places: Place[] }) {
+function WebMap({ coordinates, fullScreen, live, places, onPlacePress }: { coordinates: Coordinate[]; fullScreen: boolean; live: boolean; places: Place[]; onPlacePress?: (place: Place) => void }) {
   const mapElementRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import('leaflet').Map | null>(null);
   const leafletRef = useRef<LeafletModule | null>(null);
@@ -92,14 +93,13 @@ function WebMap({ coordinates, fullScreen, live, places }: { coordinates: Coordi
     if (!isReady || !map || !leaflet) return;
     placesRef.current.forEach((marker) => marker.removeFrom(map));
     placesRef.current = places.map((place) => {
-      // A DOM text node prevents map-provider names from becoming popup HTML.
-      const label = document.createElement('span');
-      label.textContent = place.name;
-      return leaflet.circleMarker([place.coordinate.latitude, place.coordinate.longitude], {
+      const marker = leaflet.circleMarker([place.coordinate.latitude, place.coordinate.longitude], {
         color: colors.white, fillColor: colors.forest, fillOpacity: 1, radius: 7, weight: 2,
-      }).bindPopup(label).addTo(map);
+      }).addTo(map);
+      marker.on('click', () => onPlacePress?.(place));
+      return marker;
     });
-  }, [places, isReady]);
+  }, [places, isReady, onPlacePress]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -170,7 +170,7 @@ function WebMap({ coordinates, fullScreen, live, places }: { coordinates: Coordi
   return <div ref={mapElementRef} style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }} />;
 }
 
-export function MapPreview({ route, isLoading = false, error, fullScreen = false, places = emptyPlaces }: MapPreviewProps) {
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, places = emptyPlaces, onPlacePress }: MapPreviewProps) {
   const { t } = useTranslation();
   const live = route?.source === 'live';
   const coordinates = useMemo(
@@ -179,15 +179,17 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
   );
   const statusLabel = isLoading
     ? t('commute.updatingRoute')
-    : live
-      ? t('commute.liveRoute')
-      : error
-        ? t('commute.routeFallback')
-        : t('commute.routePreview');
+    : live && error
+      ? t('commute.mapDataWarning')
+      : live
+        ? t('commute.liveRoute')
+        : error
+          ? t('commute.routeFallback')
+          : t('commute.routePreview');
 
   return (
     <View style={[styles.map, fullScreen && styles.fullScreenMap]}>
-      {coordinates.length > 1 ? <WebMap coordinates={coordinates} fullScreen={fullScreen} live={live} places={places} /> : null}
+      {coordinates.length > 1 ? <WebMap coordinates={coordinates} fullScreen={fullScreen} live={live} places={places} onPlacePress={onPlacePress} /> : null}
       <View style={styles.statusPill}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
         <Text style={styles.statusText}>{statusLabel}</Text>

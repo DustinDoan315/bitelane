@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ActionButton } from '../components/ActionButton';
@@ -14,6 +15,7 @@ export function DiscoverScreen({ journey, route, offers, budget, phase, error, s
   budget: BudgetSettings; offers: FoodOffer[]; onBudget: (value: BudgetSettings) => void;
 }) {
   const { t } = useTranslation();
+  const [offerLimit, setOfferLimit] = useState(8);
   return <ScrollView contentContainerStyle={styles.page}>
     <Text style={styles.eyebrow}>{t('app.discoverEyebrow')}</Text>
     <Text style={styles.title}>{t('app.discoverTitle')}</Text>
@@ -49,9 +51,15 @@ export function DiscoverScreen({ journey, route, offers, budget, phase, error, s
           <Text style={styles.heading}>{t('app.budgetResults')}</Text>
           <Pressable accessibilityRole="button" onPress={onRetry} style={styles.refresh}><Text style={styles.refreshText}>{t('app.refresh')}</Text></Pressable>
         </View>
-        {offers.length ? offers.slice(0, 5).map((offer) => <FoodOfferCard key={offer.id} offer={offer}
-          saved={saved.some((p) => p.id === offer.place.id)} onOpen={() => onOpen(offer)} onSave={() => onSave(offer.place)} />)
-          : <View style={styles.budgetEmpty}><Text style={styles.heading}>{t('app.budgetNoMatches')}</Text><Text style={styles.body}>{t('app.budgetNoMatchesHelp')}</Text></View>}
+        <Text style={styles.small}>{t('app.budgetResultsHelp')}</Text>
+        {offers.length ? <>
+          {offers.slice(0, offerLimit).map((offer) => <FoodOfferCard key={offer.id} offer={offer}
+            saved={saved.some((p) => p.id === offer.place.id)} onOpen={() => onOpen(offer)} onSave={() => onSave(offer.place)} />)}
+          {offers.length > offerLimit ? <ActionButton secondary label={t('app.showMore')} onPress={() => setOfferLimit((current) => current + 8)} /> : null}
+        </>
+          : <View style={styles.budgetEmpty}><Text style={styles.heading}>{t('app.budgetNoMatches')}</Text><Text style={styles.body}>{t('app.budgetNoMatchesHelp')}</Text>
+            <ActionButton secondary label={t('commute.openMap')} onPress={onMap} />
+          </View>}
       </>}
     </>}
     <Text style={styles.small}>{t('app.dataNotice')}</Text>

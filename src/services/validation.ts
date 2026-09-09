@@ -24,7 +24,12 @@ function isPlace(value: unknown): value is Place {
     && ['restaurant', 'cafe', 'fast_food', 'food_court'].includes(p.category)
     && typeof p.vegetarian === 'boolean' && Number.isFinite(Date.parse(p.fetchedAt))
     && p.sourceUrl === `https://www.openstreetmap.org/${p.id}`
-    && [p.address, p.cuisine, p.openingHours].every((x) => x === undefined || typeof x === 'string');
+    && [p.address, p.cuisine, p.openingHours].every((x) => x === undefined || typeof x === 'string')
+    && [p.websiteUrl, p.menuUrl].every((x) => x === undefined || isWebUrl(x));
+}
+function isWebUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try { return ['http:', 'https:'].includes(new URL(value).protocol); } catch { return false; }
 }
 const defaultBudget: BudgetSettings = { maxVndPerPerson: 50000, dishQuery: '' };
 function isBudget(value: unknown): value is BudgetSettings {

@@ -24,6 +24,7 @@ Date: 2026-09-08 (Asia/Ho_Chi_Minh)
 - Confirm visit created one timestamped History event; History retained it after reload; undo restored the empty state.
 - English/Vietnamese switching updated current UI and persisted language.
 - No browser runtime errors or framework error overlay occurred. Development-only React Native Web deprecation warnings remain for legacy shadow style properties in the existing map controls.
+- A fresh-install budget check at 100,000₫ returned 40 labeled meal estimates from 665 live route venues; the first eight rendered with ranges such as 20,000₫–70,000₫ and did not require a local report. Selecting an estimate opened detail without presenting it as an exact dish. Exact named reports remain preferred when the optional food-name query is used.
 
 ## Security and dependency review
 

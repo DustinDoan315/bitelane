@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { AddressSuggestion, Journey } from '../types';
@@ -19,7 +19,6 @@ export function JourneySetupScreen({ journey, onSave, onBack }: { journey: Journ
       <Text style={styles.body}>{t('app.setupHelp')}</Text>
       <AddressSearch label={t('app.origin')} value={origin} onSelect={setOrigin} />
       <AddressSearch label={t('app.destination')} value={destination} onSelect={setDestination} />
-      <Text style={styles.body}>{t('app.drivingOnly')}</Text>
       {same ? <Text accessibilityRole="alert" style={styles.error}>{t('app.errors.sameAddress')}</Text> : null}
       <ActionButton label={t('app.findFood')} disabled={!origin || !destination || !!same} onPress={() => { if (origin && destination) onSave({ origin, destination }); }} />
       <Text style={styles.small}>{t('app.privacy')}</Text>
@@ -35,22 +34,28 @@ function AddressSearch({ label, value, onSelect }: { label: string; value: Addre
   const [error, setError] = useState<string | null>(null);
   const generation = useRef(0);
   useEffect(() => () => { generation.current++; }, []);
-  const search = async () => {
-    if (query.trim().length < 3 || loading) return;
+  const search = useCallback(async (nextQuery: string) => {
+    const normalized = nextQuery.trim();
+    if (normalized.length < 3) return;
     const id = ++generation.current;
     setLoading(true); setError(null); setResults([]);
     try {
-      const next = await searchAddresses(query);
+      const next = await searchAddresses(normalized);
       if (id === generation.current) { setResults(next); if (!next.length) setError('noAddresses'); }
     } catch (e) { if (id === generation.current) setError(e instanceof Error ? e.message : 'networkError'); }
     finally { if (id === generation.current) setLoading(false); }
-  };
+  }, []);
+  useEffect(() => {
+    const normalized = query.trim();
+    if (normalized.length < 3 || (value && normalized === value.label)) return;
+    const timer = setTimeout(() => { void search(normalized); }, 350);
+    return () => clearTimeout(timer);
+  }, [query, search, value]);
   return <View style={styles.field}>
     <Text style={styles.label}>{label}{value ? ' ✓' : ''}</Text>
     <TextInput accessibilityLabel={label} placeholder={t('app.addressPlaceholder')} placeholderTextColor={colors.secondaryText}
       value={query} onChangeText={(next) => { ++generation.current; setQuery(next); onSelect(null); setResults([]); setError(null); setLoading(false); }}
-      onSubmitEditing={() => void search()} returnKeyType="search" style={styles.input} />
-    <ActionButton secondary disabled={loading || query.trim().length < 3} label={t('app.searchAddress', { label })} onPress={() => void search()} />
+      onSubmitEditing={() => void search(query)} returnKeyType="search" style={styles.input} />
     {loading ? <ActivityIndicator accessibilityLabel={t('app.searching')} color={colors.forest} /> : null}
     {error ? <Text accessibilityRole="alert" style={styles.error}>{t(`app.errors.${error}`, { defaultValue: t('app.errors.networkError') })}</Text> : null}
     {results.map((result) => <ActionButton key={result.id} secondary label={result.label} onPress={() => { ++generation.current; onSelect(result); setQuery(result.label); setResults([]); }} />)}

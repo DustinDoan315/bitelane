@@ -6,6 +6,16 @@ const overpassUrl = process.env.EXPO_PUBLIC_OVERPASS_URL ?? 'https://overpass-ap
 export const CORRIDOR_METERS = 750;
 export const MAX_ROUTE_METERS = 40000;
 
+function webUrl(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  try {
+    const url = new URL(value.includes('://') ? value.trim() : `https://${value.trim()}`);
+    return ['http:', 'https:'].includes(url.protocol) && url.hostname.includes('.') ? url.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Distance to the polyline, not a driving detour or ETA. */
 export function distanceFromRoute(point: Coordinate, route: Coordinate[]): number {
   const scaleX = 111320 * Math.cos(point.latitude * Math.PI / 180);
@@ -57,6 +67,8 @@ export async function findPlaces(route: RouteData): Promise<Candidate[]> {
       cuisine: stringTag('cuisine')?.replaceAll(';', ', ').replaceAll('_', ' '),
       address: [stringTag('addr:housenumber'), stringTag('addr:street'), stringTag('addr:city')].filter(Boolean).join(' ') || undefined,
       openingHours: stringTag('opening_hours'),
+      websiteUrl: webUrl(tags.website ?? tags['contact:website']),
+      menuUrl: webUrl(tags.menu ?? tags['contact:menu']),
       vegetarian: ['yes', 'only'].includes(tags['diet:vegetarian']) || ['yes', 'only'].includes(tags['diet:vegan']),
       sourceUrl: `https://www.openstreetmap.org/${id}`, fetchedAt: new Date().toISOString(),
     };

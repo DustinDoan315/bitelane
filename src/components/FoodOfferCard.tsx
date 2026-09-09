@@ -8,14 +8,23 @@ const formatVnd = (value: number) => `${new Intl.NumberFormat('vi-VN').format(va
 
 export function FoodOfferCard({ offer, saved, onOpen, onSave }: { offer: FoodOffer; saved: boolean; onOpen: () => void; onSave: () => void }) {
   const { t } = useTranslation();
+  const itemLabel = offer.itemName ?? (offer.requestedFood || offer.suggestedFood
+    ? t('app.estimatedQuery', { food: offer.requestedFood ?? offer.suggestedFood })
+    : t('app.estimatedMeal', { category: t(`app.categories.${offer.place.category}`) }));
+  const priceLabel = offer.priceRangeVnd.min === offer.priceRangeVnd.max
+    ? formatVnd(offer.priceRangeVnd.min)
+    : `${formatVnd(offer.priceRangeVnd.min)}–${formatVnd(offer.priceRangeVnd.max)}`;
+  const evidenceLabel = offer.evidence === 'user_report'
+    ? t('app.reportedPrice')
+    : t(offer.fit === 'likely' ? 'app.estimatedPriceLikely' : 'app.estimatedPricePossible');
   return <View style={styles.card}>
-    <Pressable accessibilityRole="button" accessibilityLabel={t('app.openFoodOffer', { item: offer.itemName, name: offer.place.name })} onPress={onOpen} style={styles.content}>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('app.openFoodOffer', { item: itemLabel, name: offer.place.name })} onPress={onOpen} style={styles.content}>
       <View style={styles.icon}><Icon name="silverware-fork-knife" color={colors.forest} size={24} /></View>
       <View style={styles.copy}>
-        <Text style={styles.item}>{offer.itemName}</Text>
+        <Text style={styles.item}>{itemLabel}</Text>
         <Text style={styles.store}>{offer.place.name}</Text>
-        <Text style={styles.meta}>{formatVnd(offer.priceVnd)} / {t('app.person')} · {t('app.distance', { meters: Math.round(offer.distanceFromRouteMeters / 10) * 10 })}</Text>
-        <Text style={styles.evidence}>{t('app.reportedPrice')}</Text>
+        <Text style={styles.meta}>{priceLabel} / {t('app.person')} · {t('app.distance', { meters: Math.round(offer.distanceFromRouteMeters / 10) * 10 })}</Text>
+        <Text style={[styles.evidence, offer.evidence === 'estimated' && styles.estimate]}>{evidenceLabel}</Text>
       </View>
     </Pressable>
     <Pressable accessibilityRole="button" accessibilityLabel={t(saved ? 'app.unsavePlace' : 'app.savePlace', { name: offer.place.name })}
@@ -28,6 +37,6 @@ export function FoodOfferCard({ offer, saved, onOpen, onSave }: { offer: FoodOff
 const styles = StyleSheet.create({
   card: { flexDirection: 'row', backgroundColor: colors.white, borderRadius: 20, borderWidth: 1, borderColor: colors.border, alignItems: 'flex-start' },
   content: { flex: 1, flexDirection: 'row', gap: 12, padding: 16 }, icon: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.peach, alignItems: 'center', justifyContent: 'center' },
-  copy: { flex: 1, gap: 5 }, item: { color: colors.text, fontWeight: '800', fontSize: 18 }, store: { color: colors.forest, fontSize: 14, fontWeight: '700' }, meta: { color: colors.secondaryText, fontSize: 13, lineHeight: 19 }, evidence: { color: colors.accent, fontSize: 12, fontWeight: '700' },
+  copy: { flex: 1, gap: 5 }, item: { color: colors.text, fontWeight: '800', fontSize: 18 }, store: { color: colors.forest, fontSize: 14, fontWeight: '700' }, meta: { color: colors.secondaryText, fontSize: 13, lineHeight: 19 }, evidence: { color: colors.accent, fontSize: 12, fontWeight: '700' }, estimate: { color: colors.forest },
   save: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
 });

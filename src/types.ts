@@ -11,6 +11,8 @@ export type Place = {
   cuisine?: string;
   address?: string;
   openingHours?: string;
+  websiteUrl?: string;
+  menuUrl?: string;
   vegetarian: boolean;
   sourceUrl: string;
   fetchedAt: string;
@@ -25,7 +27,20 @@ export type MenuReport = {
   reportedAt: string;
   source: 'user_report';
 };
-export type FoodOffer = MenuReport & { place: Place; distanceFromRouteMeters: number };
+export type PriceRangeVnd = { min: number; max: number };
+export type FoodOffer = {
+  id: string;
+  placeId: string;
+  itemName?: string;
+  requestedFood?: string;
+  suggestedFood?: string;
+  priceRangeVnd: PriceRangeVnd;
+  evidence: 'user_report' | 'estimated';
+  fit: 'exact' | 'likely' | 'possible';
+  reportedAt?: string;
+  place: Place;
+  distanceFromRouteMeters: number;
+};
 export type Visit = { id: string; place: Place; visitedAt: string };
 export type Preferences = { vegetarianOnly: boolean; hideVisited: boolean };
 export type StoredState = {

@@ -11,6 +11,7 @@ export async function searchAddresses(query: string): Promise<AddressSuggestion[
   const payload = await cachedRequest(`${geocoderUrl}?limit=5&q=${encodeURIComponent(query.trim())}`, 86400000);
   if (!payload || !Array.isArray(payload.features)) throw new Error('invalidResponse');
   const results: AddressSuggestion[] = [];
+  const seen = new Set<string>();
   for (const feature of payload.features) {
     const [longitude, latitude] = feature.geometry?.coordinates ?? [];
     const coordinate = { latitude, longitude };
@@ -18,7 +19,11 @@ export async function searchAddresses(query: string): Promise<AddressSuggestion[
     if (!isCoordinate(coordinate) || !p) continue;
     const label = [...new Set([p.name, [p.housenumber, p.street].filter(Boolean).join(' '), p.city, p.state, p.country]
       .filter((part): part is string => typeof part === 'string' && !!part.trim()))].join(', ');
-    if (label) results.push({ id: `${p.osm_type}/${p.osm_id}/${latitude}/${longitude}`, label, coordinate });
+    const id = `${p.osm_type}/${p.osm_id}/${latitude}/${longitude}`;
+    if (label && !seen.has(id)) {
+      seen.add(id);
+      results.push({ id, label, coordinate });
+    }
   }
   return results;
 }

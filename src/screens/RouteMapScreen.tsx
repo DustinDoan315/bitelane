@@ -14,11 +14,12 @@ type RouteMapScreenProps = {
   error?: string | null;
   isLoading?: boolean;
   onBack: () => void;
+  onOpenPlace: (place: Place) => void;
   onRetry: () => void;
   route: RouteData | null;
 };
 
-export function RouteMapScreen({ journey, places, error, isLoading = false, onBack, onRetry, route }: RouteMapScreenProps) {
+export function RouteMapScreen({ journey, places, error, isLoading = false, onBack, onOpenPlace, onRetry, route }: RouteMapScreenProps) {
   const { t } = useTranslation();
   const routeMeta = route?.source === 'live'
     ? t('app.routeMeta', { minutes: Math.round(route.durationSeconds / 60), km: (route.distanceMeters / 1000).toFixed(1) })
@@ -27,7 +28,7 @@ export function RouteMapScreen({ journey, places, error, isLoading = false, onBa
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
-      <MapPreview error={error} fullScreen isLoading={isLoading} route={route} places={places} />
+      <MapPreview error={error} fullScreen isLoading={isLoading} route={route} places={places} onPlacePress={onOpenPlace} />
 
       <View style={styles.overlay}>
         <View style={styles.topRow}>
@@ -53,6 +54,7 @@ export function RouteMapScreen({ journey, places, error, isLoading = false, onBa
           {journey.origin.label} → {journey.destination.label}
         </Text>
         <Text style={styles.routeMeta}>{routeMeta}</Text>
+        {error ? <Text accessibilityRole="alert" style={styles.warning}>{t(`app.errors.${error}`, { defaultValue: t('app.errors.serviceUnavailable') })}</Text> : <Text style={styles.hint}>{t('commute.mapPlaceHint')}</Text>}
         <PrimaryButton disabled={isLoading} iconName="refresh" labelKey="commute.refreshRoute" onPress={onRetry} />
       </View>
     </View>
@@ -82,10 +84,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     height: 44,
     justifyContent: 'center',
-    shadowColor: colors.black,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 7,
+    boxShadow: '0px 2px 7px rgba(0, 0, 0, 0.12)',
     width: 44,
   },
   titlePill: {
@@ -98,10 +97,7 @@ const styles = StyleSheet.create({
     marginTop: -36,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    shadowColor: colors.black,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 7,
+    boxShadow: '0px 2px 7px rgba(0, 0, 0, 0.1)',
   },
   title: {
     color: colors.text,
@@ -131,5 +127,14 @@ const styles = StyleSheet.create({
   routeMeta: {
     color: colors.secondaryText,
     fontSize: 14,
+  },
+  hint: {
+    color: colors.secondaryText,
+    fontSize: 13,
+  },
+  warning: {
+    color: colors.accent,
+    fontSize: 13,
+    lineHeight: 20,
   },
 });

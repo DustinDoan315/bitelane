@@ -9,7 +9,7 @@ import type { MapPreviewProps } from './MapPreview';
 
 const emptyCoordinates: Coordinate[] = [];
 
-export function MapPreview({ route, isLoading = false, error, fullScreen = false, places = [] }: MapPreviewProps) {
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, places = [], onPlacePress }: MapPreviewProps) {
   const { t } = useTranslation();
   const mapRef = useRef<MapView>(null);
   const coordinates = useMemo(
@@ -21,11 +21,13 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
   const live = route?.source === 'live';
   const statusLabel = isLoading
     ? t('commute.updatingRoute')
-    : live
-      ? t('commute.liveRoute')
-      : error
-        ? t('commute.routeFallback')
-        : t('commute.routePreview');
+    : live && error
+      ? t('commute.mapDataWarning')
+      : live
+        ? t('commute.liveRoute')
+        : error
+          ? t('commute.routeFallback')
+          : t('commute.routePreview');
 
   const fitRoute = () => {
     if (coordinates.length > 1) {
@@ -61,7 +63,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
         ) : null}
         <Marker coordinate={start} pinColor={colors.forest} />
         <Marker coordinate={end} pinColor={colors.accent} />
-        {places.map((place) => <Marker key={place.id} coordinate={place.coordinate} title={place.name} pinColor={colors.forest} />)}
+        {places.map((place) => <Marker key={place.id} coordinate={place.coordinate} title={place.name} pinColor={colors.forest} onPress={() => onPlacePress?.(place)} />)}
       </MapView> : null}
       <View style={styles.statusPill}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}

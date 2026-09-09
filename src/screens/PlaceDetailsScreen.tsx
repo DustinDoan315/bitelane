@@ -8,16 +8,27 @@ import { getRoute } from '../services/routeService';
 import { getNavigationUrl } from '../services/navigationService';
 import { colors } from '../theme';
 
-export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, saved, onSave, onVisit, onReport, onBack }: {
-  offer: FoodOffer | null; place: Place; journey: Journey | null; baseRoute: RouteData | null; reports: MenuReport[]; saved: boolean; onSave: () => void; onVisit: () => void; onReport: (itemName: string, priceVnd: number) => void; onBack: () => void;
+const formatVnd = (value: number) => `${new Intl.NumberFormat('vi-VN').format(value)}₫`;
+
+export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, saved, initialReportOpen = false, onSave, onVisit, onReport, onBack }: {
+  offer: FoodOffer | null; place: Place; journey: Journey | null; baseRoute: RouteData | null; reports: MenuReport[]; saved: boolean; initialReportOpen?: boolean; onSave: () => void; onVisit: () => void; onReport: (itemName: string, priceVnd: number) => void; onBack: () => void;
 }) {
   const { t, i18n } = useTranslation();
-  const offerPrice = offer ? `${new Intl.NumberFormat('vi-VN').format(offer.priceVnd)}₫ / ${t('app.person')}` : null;
+  const offerPrice = offer
+    ? `${offer.priceRangeVnd.min === offer.priceRangeVnd.max
+      ? formatVnd(offer.priceRangeVnd.min)
+      : `${formatVnd(offer.priceRangeVnd.min)}–${formatVnd(offer.priceRangeVnd.max)}`} / ${t('app.person')}`
+    : null;
+  const offerEvidence = offer?.evidence === 'user_report'
+    ? t('app.reportedPrice')
+    : offer
+      ? t(offer.fit === 'likely' ? 'app.estimatedPriceLikely' : 'app.estimatedPricePossible')
+      : null;
   const [route, setRoute] = useState<RouteData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [visited, setVisited] = useState(false);
-  const [reportOpen, setReportOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(initialReportOpen);
   const [itemName, setItemName] = useState('');
   const [priceText, setPriceText] = useState('');
   const [reportNotice, setReportNotice] = useState(false);
@@ -47,9 +58,11 @@ export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, 
     <ActionButton secondary label={t('app.back')} onPress={onBack} />
     {offer ? <View style={styles.offerHero}>
       <Text style={styles.eyebrow}>{t('app.mealMatch')}</Text>
-      <Text style={styles.title}>{offer.itemName}</Text>
+      <Text style={styles.title}>{offer.itemName ?? (offer.requestedFood || offer.suggestedFood
+        ? t('app.estimatedQuery', { food: offer.requestedFood ?? offer.suggestedFood })
+        : t('app.estimatedMeal', { category: t(`app.categories.${place.category}`) }))}</Text>
       <Text style={styles.offerPrice}>{offerPrice}</Text>
-      <Text style={styles.small}>{t('app.reportedPrice')}</Text>
+      <Text style={styles.small}>{offerEvidence}</Text>
     </View> : null}
     <Text style={styles.eyebrow}>{offer ? t('app.offerStore') : t(`app.categories.${place.category}`)}</Text>
     <Text style={styles.title}>{place.name}</Text>
@@ -60,7 +73,7 @@ export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, 
       <Text style={styles.body}>{place.openingHours || t('app.hoursUnknown')}</Text>
       <Text style={styles.small}>{t('app.hoursNote')}</Text>
       <Text style={styles.label}>{t('app.price')}</Text>
-      {offer ? <><Text style={styles.body}>{offerPrice}</Text><Text style={styles.small}>{t('app.reportedPrice')}</Text></> : <Text style={styles.body}>{t('app.priceUnknown')}</Text>}
+      {offer ? <><Text style={styles.body}>{offerPrice}</Text><Text style={styles.small}>{offerEvidence}</Text></> : <Text style={styles.body}>{t('app.priceUnknown')}</Text>}
       {place.vegetarian ? <Text style={styles.body}>{t('app.vegetarianNote')}</Text> : null}
     </View>
     <View style={styles.reportCard}>
@@ -87,6 +100,8 @@ export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, 
     </> : null}
     {error ? <Text accessibilityRole="alert" style={styles.error}>{t(`app.errors.${error}`, { defaultValue: t('app.errors.networkError') })}</Text> : null}
     <ActionButton label={t('app.navigate')} onPress={() => void open(getNavigationUrl(place))} />
+    {place.menuUrl ? <ActionButton secondary label={t('app.openMenu')} onPress={() => void open(place.menuUrl!)} /> : null}
+    {place.websiteUrl && place.websiteUrl !== place.menuUrl ? <ActionButton secondary label={t('app.openWebsite')} onPress={() => void open(place.websiteUrl!)} /> : null}
     <ActionButton secondary label={t(saved ? 'app.removeSaved' : 'app.save')} onPress={onSave} />
     <ActionButton secondary disabled={visited} label={t(visited ? 'app.visitRecorded' : 'app.recordVisit')} onPress={() => { onVisit(); setVisited(true); }} />
     <Text style={styles.small}>{t('app.visitNote')}</Text>
