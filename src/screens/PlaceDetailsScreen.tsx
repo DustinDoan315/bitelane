@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { FoodOffer, Journey, MenuReport, Place, RouteData } from '../types';
 import { ActionButton } from '../components/ActionButton';
 import { MapPreview } from '../components/MapPreview';
+import { PlaceThumbnail } from '../components/PlaceThumbnail';
+import { SaveButton } from '../components/SaveButton';
 import { getRoute } from '../services/routeService';
 import { getNavigationUrl } from '../services/navigationService';
+import { formatVnd } from '../services/format';
 import { colors } from '../theme';
-
-const formatVnd = (value: number) => `${new Intl.NumberFormat('vi-VN').format(value)}₫`;
 
 export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, saved, initialReportOpen = false, onSave, onVisit, onReport, onBack }: {
   offer: FoodOffer | null; place: Place; journey: Journey | null; baseRoute: RouteData | null; reports: MenuReport[]; saved: boolean; initialReportOpen?: boolean; onSave: () => void; onVisit: () => void; onReport: (itemName: string, priceVnd: number) => void; onBack: () => void;
@@ -54,33 +55,41 @@ export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, 
     onReport(itemName, priceVnd);
     setItemName(''); setPriceText(''); setReportOpen(false); setReportNotice(true);
   };
+  const offerLabel = offer?.itemName ?? (offer?.requestedFood || offer?.suggestedFood
+    ? t('app.estimatedQuery', { food: offer.requestedFood ?? offer.suggestedFood })
+    : t('app.estimatedMeal', { category: t(`app.categories.${place.category}`) }));
   return <ScrollView contentContainerStyle={styles.page}>
     <ActionButton secondary label={t('app.back')} onPress={onBack} />
-    {offer ? <View style={styles.offerHero}>
-      <Text style={styles.eyebrow}>{t('app.mealMatch')}</Text>
-      <Text style={styles.title}>{offer.itemName ?? (offer.requestedFood || offer.suggestedFood
-        ? t('app.estimatedQuery', { food: offer.requestedFood ?? offer.suggestedFood })
-        : t('app.estimatedMeal', { category: t(`app.categories.${place.category}`) }))}</Text>
-      <Text style={styles.offerPrice}>{offerPrice}</Text>
-      <Text style={styles.small}>{offerEvidence}</Text>
-    </View> : null}
-    <Text style={styles.eyebrow}>{offer ? t('app.offerStore') : t(`app.categories.${place.category}`)}</Text>
-    <Text style={styles.title}>{place.name}</Text>
-    <Text style={styles.body}>{place.address || t('app.addressUnknown')}</Text>
-    {place.cuisine ? <Text style={styles.body}>{place.cuisine}</Text> : null}
+    <View style={styles.hero}>
+      <PlaceThumbnail accessibilityLabel={t('app.placeImage', { name: place.name })} place={place} size={88} />
+      <View style={styles.heroCopy}>
+        <Text style={styles.eyebrow}>{offer ? t('app.mealMatch') : t(`app.categories.${place.category}`)}</Text>
+        {offer ? <Text style={styles.mealName}>{offerLabel}</Text> : null}
+        <Text style={styles.title}>{place.name}</Text>
+        {offer ? <Text style={styles.offerPrice}>{offerPrice}</Text> : null}
+        {offer ? <Text style={styles.small}>{offerEvidence}</Text> : null}
+      </View>
+    </View>
+    <View style={styles.primaryActions}>
+      <ActionButton label={t('app.navigate')} onPress={() => void open(getNavigationUrl(place))} />
+      <SaveButton place={place} saved={saved} onPress={onSave} />
+    </View>
     <View style={styles.facts}>
-      <Text style={styles.label}>{t('app.hours')}</Text>
-      <Text style={styles.body}>{place.openingHours || t('app.hoursUnknown')}</Text>
-      <Text style={styles.small}>{t('app.hoursNote')}</Text>
-      <Text style={styles.label}>{t('app.price')}</Text>
-      {offer ? <><Text style={styles.body}>{offerPrice}</Text><Text style={styles.small}>{offerEvidence}</Text></> : <Text style={styles.body}>{t('app.priceUnknown')}</Text>}
+      <Text style={styles.body}>{place.address || t('app.addressUnknown')}</Text>
+      {place.cuisine ? <Text style={styles.body}>{place.cuisine}</Text> : null}
+      <View style={styles.factBlock}>
+        <Text style={styles.label}>{t('app.hours')}</Text>
+        <Text style={styles.body}>{place.openingHours || t('app.hoursUnknown')}</Text>
+        <Text style={styles.small}>{t('app.hoursNote')}</Text>
+      </View>
+      {!offer ? <View style={styles.factBlock}><Text style={styles.label}>{t('app.price')}</Text><Text style={styles.body}>{t('app.priceUnknown')}</Text></View> : null}
       {place.vegetarian ? <Text style={styles.body}>{t('app.vegetarianNote')}</Text> : null}
     </View>
     <View style={styles.reportCard}>
       <Text style={styles.label}>{t('app.reportMenuTitle')}</Text>
       <Text style={styles.small}>{t('app.reportMenuHelp')}</Text>
       {reports.length ? reports.slice(0, 3).map((report) => <View key={report.id} style={styles.reportRow}>
-        <Text style={styles.body}>{report.itemName} · {new Intl.NumberFormat('vi-VN').format(report.priceVnd)}₫</Text>
+        <Text style={styles.body}>{report.itemName} · {formatVnd(report.priceVnd)}</Text>
         <Text style={styles.small}>{t('app.reportedPrice')} · {new Date(report.reportedAt).toLocaleDateString(i18n.language)}</Text>
       </View>) : <Text style={styles.small}>{t('app.reportEmpty')}</Text>}
       {reportOpen ? <>
@@ -92,27 +101,32 @@ export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, 
       {reportNotice ? <Text style={styles.saved}>{t('app.reportSaved')}</Text> : null}
     </View>
     {journey && baseRoute ? <>
-      <MapPreview route={route ?? baseRoute} places={[place]} isLoading={loading} />
+      <MapPreview height={220} route={route ?? baseRoute} places={[place]} isLoading={loading} />
       <ActionButton secondary disabled={loading} label={t('app.checkDetour')} onPress={() => void checkDetour()} />
       {loading ? <ActivityIndicator color={colors.forest} /> : null}
       {route ? <Text style={styles.label}>{t('app.detour', { minutes: Math.ceil(Math.max(0, route.durationSeconds - baseRoute.durationSeconds) / 60) })}</Text> : null}
       <Text style={styles.small}>{t('app.detourNote')}</Text>
     </> : null}
     {error ? <Text accessibilityRole="alert" style={styles.error}>{t(`app.errors.${error}`, { defaultValue: t('app.errors.networkError') })}</Text> : null}
-    <ActionButton label={t('app.navigate')} onPress={() => void open(getNavigationUrl(place))} />
-    {place.menuUrl ? <ActionButton secondary label={t('app.openMenu')} onPress={() => void open(place.menuUrl!)} /> : null}
-    {place.websiteUrl && place.websiteUrl !== place.menuUrl ? <ActionButton secondary label={t('app.openWebsite')} onPress={() => void open(place.websiteUrl!)} /> : null}
-    <ActionButton secondary label={t(saved ? 'app.removeSaved' : 'app.save')} onPress={onSave} />
-    <ActionButton secondary disabled={visited} label={t(visited ? 'app.visitRecorded' : 'app.recordVisit')} onPress={() => { onVisit(); setVisited(true); }} />
-    <Text style={styles.small}>{t('app.visitNote')}</Text>
-    <ActionButton secondary label={t('app.viewSource')} onPress={() => void open(place.sourceUrl)} />
+    <View style={styles.secondaryActions}>
+      <Text style={styles.sectionLabel}>{t('app.morePlaceActions')}</Text>
+      {place.menuUrl ? <LinkAction label={t('app.openMenu')} onPress={() => void open(place.menuUrl!)} /> : null}
+      {place.websiteUrl && place.websiteUrl !== place.menuUrl ? <LinkAction label={t('app.openWebsite')} onPress={() => void open(place.websiteUrl!)} /> : null}
+      <ActionButton secondary disabled={visited} label={t(visited ? 'app.visitRecorded' : 'app.recordVisit')} onPress={() => { onVisit(); setVisited(true); }} />
+      <Text style={styles.small}>{t('app.visitNote')}</Text>
+      <LinkAction label={t('app.viewSource')} onPress={() => void open(place.sourceUrl)} />
+    </View>
     <Text style={styles.small}>{t('app.fetched', { date: new Date(place.fetchedAt).toLocaleString(i18n.language) })}</Text>
   </ScrollView>;
 }
+function LinkAction({ label, onPress }: { label: string; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" onPress={onPress} style={styles.linkAction}><Text style={styles.linkText}>{label} ↗</Text></Pressable>;
+}
 const styles = StyleSheet.create({
-  page: { padding: 24, gap: 18 }, eyebrow: { color: colors.accent, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
-  offerHero: { backgroundColor: colors.peach, borderRadius: 22, padding: 20, gap: 8 }, offerPrice: { color: colors.forest, fontSize: 20, fontWeight: '800' },
-  title: { fontSize: 32, color: colors.text, fontWeight: '800' }, body: { color: colors.secondaryText, fontSize: 15, lineHeight: 23 },
-  label: { color: colors.forest, fontSize: 15, fontWeight: '700' }, facts: { backgroundColor: colors.white, borderRadius: 20, padding: 20, gap: 12 }, reportCard: { backgroundColor: colors.peach, borderRadius: 20, padding: 20, gap: 12 }, reportRow: { gap: 3 }, input: { minHeight: 48, borderWidth: 1, borderColor: colors.white, borderRadius: 12, backgroundColor: colors.white, paddingHorizontal: 13, color: colors.text, fontSize: 15 }, saved: { color: colors.forest, fontWeight: '700', fontSize: 13 },
+  page: { padding: 24, gap: 18, paddingBottom: 36 }, eyebrow: { color: colors.accent, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
+  hero: { backgroundColor: colors.peach, borderRadius: 22, padding: 18, flexDirection: 'row', gap: 14, alignItems: 'center' }, heroCopy: { flex: 1, gap: 5 }, mealName: { color: colors.text, fontSize: 21, fontWeight: '800' }, offerPrice: { color: colors.forest, fontSize: 18, fontWeight: '800' },
+  title: { fontSize: 25, color: colors.text, fontWeight: '800' }, body: { color: colors.secondaryText, fontSize: 15, lineHeight: 23 }, primaryActions: { gap: 10 },
+  label: { color: colors.forest, fontSize: 14, fontWeight: '700' }, facts: { backgroundColor: colors.white, borderRadius: 20, padding: 18, gap: 12 }, factBlock: { gap: 4 }, reportCard: { backgroundColor: colors.peach, borderRadius: 20, padding: 18, gap: 12 }, reportRow: { gap: 3 }, input: { minHeight: 48, borderWidth: 1, borderColor: colors.white, borderRadius: 12, backgroundColor: colors.white, paddingHorizontal: 13, color: colors.text, fontSize: 15 }, saved: { color: colors.forest, fontWeight: '700', fontSize: 13 },
+  secondaryActions: { backgroundColor: colors.white, borderRadius: 20, padding: 18, gap: 12 }, sectionLabel: { color: colors.text, fontSize: 16, fontWeight: '800' }, linkAction: { minHeight: 42, justifyContent: 'center' }, linkText: { color: colors.forest, fontSize: 14, fontWeight: '800' },
   small: { color: colors.secondaryText, fontSize: 12, lineHeight: 19 }, error: { color: colors.accent, lineHeight: 22 },
 });

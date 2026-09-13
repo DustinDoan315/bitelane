@@ -1,11 +1,13 @@
-export type FoodSuggestion = { label: string; aliases: string[] };
+import type { Place } from '../types';
+
+export type FoodSuggestion = { label: string; aliases: string[]; keywords: string[] };
 
 export const foodSuggestions: FoodSuggestion[] = [
-  { label: 'Cơm tấm', aliases: ['com', 'com tam'] },
-  { label: 'Phở', aliases: ['pho'] },
-  { label: 'Bánh mì', aliases: ['banh', 'banh mi'] },
-  { label: 'Bún', aliases: ['bun'] },
-  { label: 'Cà phê', aliases: ['ca phe', 'coffee'] },
+  { label: 'Cơm tấm', aliases: ['com', 'com tam'], keywords: ['rice'] },
+  { label: 'Phở', aliases: ['pho'], keywords: [] },
+  { label: 'Bánh mì', aliases: ['banh', 'banh mi'], keywords: ['sandwich', 'bakery'] },
+  { label: 'Bún', aliases: ['bun'], keywords: ['vermicelli'] },
+  { label: 'Cà phê', aliases: ['ca phe', 'coffee'], keywords: ['cafe'] },
 ];
 
 export const estimatedFoodNames = ['Cơm', 'Phở', 'Bún', 'Gỏi cuốn', 'Bánh mì', 'Hủ tiếu', 'Mì', 'Cháo'];
@@ -29,6 +31,24 @@ export function getFoodSuggestions(value: string) {
 export function getCanonicalFoodLabel(value: string) {
   const query = normalizeFood(value);
   return foodSuggestions.find(({ label, aliases }) => normalizeFood(label) === query || aliases.some((alias) => normalizeFood(alias) === query))?.label;
+}
+
+/**
+ * OSM food tags are incomplete, so match the selected dish against every
+ * descriptive field we have while keeping a blank selection intentionally broad.
+ */
+export function matchesFoodType(place: Place, value: string) {
+  const query = normalizeFood(value);
+  if (!query) return true;
+  const suggestion = foodSuggestions.find(({ label, aliases }) => normalizeFood(label) === query || aliases.some((alias) => normalizeFood(alias) === query));
+  const terms = suggestion ? [suggestion.label, ...suggestion.aliases, ...suggestion.keywords] : [value];
+  const haystack = [place.name, place.category, place.cuisine, ...(place.foodTags ?? [])]
+    .filter((item): item is string => Boolean(item))
+    .map(normalizeFood);
+  return terms.some((term) => {
+    const normalizedTerm = normalizeFood(term);
+    return normalizedTerm.length >= 2 && haystack.some((field) => field.includes(normalizedTerm));
+  });
 }
 
 export function getEstimatedFoodName(placeId: string) {

@@ -1,6 +1,6 @@
 # BiteLane
 
-An Expo / React Native app for finding places to eat along a real journey. Web uses Leaflet; native uses `react-native-maps`.
+An Expo / React Native app for finding places to eat along a real journey, focused on Vietnam first. Web uses Leaflet; native uses `react-native-maps`.
 
 ## Run
 
@@ -14,11 +14,11 @@ Start with **Set my route**. Search both locations (include city), select actual
 
 ## Data and configuration
 
-Development defaults: Photon geocoding, OSRM driving routes, Overpass OSM place queries, OSM web tiles. These are real data, but public services have limited capacity and no SLA. The public Nominatim API is no longer used. Native basemaps use the platform provider; an Android standalone release requires Google Maps SDK configuration and a restricted client key.
+Development defaults: Photon geocoding restricted to Vietnam results, Valhalla motorcycle routes checked against a Vietnam coordinate fence, Overpass OSM place queries scoped to Vietnam, and OSM web tiles. These are real data, but public services have limited capacity and no SLA. The public Nominatim API is no longer used. Native basemaps use the platform provider; an Android standalone release requires a restricted Google Maps SDK key in `GOOGLE_MAPS_API_KEY` before rebuilding. The native map also needs a valid initial camera, which BiteLane supplies from the returned route.
 
-See [.env.example](.env.example) for optional endpoint overrides. They expect Photon, OSRM, and Overpass-compatible response formats. Expo public variables are compiled into the client; **never put secret keys in them**. Configure managed/self-hosted endpoints or a backend gateway before release. Do not assume renaming a Google endpoint makes it protocol compatible. Rebuild after changing endpoint configuration.
+See [.env.example](.env.example) for optional endpoint overrides. The default route endpoint is Valhalla; an OSRM-compatible endpoint can be selected explicitly with `EXPO_PUBLIC_ROUTE_PROVIDER=osrm`. Expo public variables are compiled into the client; **never put secret keys in them**. Configure managed/self-hosted endpoints or a backend gateway before release. Do not assume renaming a Google endpoint makes it protocol compatible. Rebuild after changing endpoint configuration.
 
-Discovery is limited to road routes up to 40 km and venues within 750 m of the route. It ranks approximate geometric proximity, not driving detour. **Calculate this stop** fetches a route through the venue and compares driving duration. Estimates exclude live traffic and meal/parking time. Budget results combine exact local reports with broad category/cuisine estimates; estimates are never presented as menu prices and are not shared between users. There is no motorbike routing, verified open-now status, licensed menu pricing, rating, or nutrition data. Unknown fields are labeled accordingly.
+Discovery is limited to motorbike routes up to 40 km and venues within 750 m of the route. It ranks approximate geometric proximity, not access feasibility. **Calculate this stop** fetches a motorbike route through the venue and compares route duration. The external directions link requests Google's `two-wheeler` mode. Estimates exclude live traffic and meal/parking time. Budget results combine exact local reports with broad category/cuisine estimates; a blank food query includes all route venues, while a selected food type filters venue metadata and matching local reports. Estimates are never presented as menu prices and are not shared between users. Venue thumbnails prefer OpenStreetMap venue images, then use an exact Wikimedia Commons image or a representative Vietnamese food thumbnail when available. There is no verified open-now status, licensed menu pricing, rating, or nutrition data. Unknown fields are labeled accordingly.
 
 Requests have a 25-second timeout and in-flight deduplication. In-memory caches: addresses 24 hours, routes 5 minutes, places 15 minutes. Refresh can reuse that cache. No automatic retries, background location tracking, or synthetic fallback route. Local history and saved places are unencrypted device storage, not account sync.
 

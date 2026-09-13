@@ -7,6 +7,7 @@ import { colors } from '../theme';
 import type { MainTab } from '../types';
 
 type BottomTabBarProps = {
+  bottomInset?: number;
   selectedTab: MainTab;
   onSelect: (tab: MainTab) => void;
 };
@@ -17,11 +18,11 @@ const tabs: Array<{ key: MainTab; labelKey: string; icon: IconName }> = [
   { key: 'saved', labelKey: 'tabs.saved', icon: 'heart-outline' },
 ];
 
-export function BottomTabBar({ selectedTab, onSelect }: BottomTabBarProps) {
+export function BottomTabBar({ bottomInset = 0, selectedTab, onSelect }: BottomTabBarProps) {
   const { t } = useTranslation();
 
   return (
-    <View style={styles.bar}>
+    <View style={[styles.bar, { paddingBottom: Math.max(8, bottomInset) }]}>
       {tabs.map((tab) => {
         const selected = tab.key === selectedTab;
 

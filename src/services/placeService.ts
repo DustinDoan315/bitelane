@@ -1,6 +1,6 @@
 import type { Candidate, Coordinate, Place, RouteData } from '../types';
 import { cachedRequest } from './transport';
-import { isCoordinate } from './validation';
+import { isCoordinate, isVietnamCoordinate } from './validation';
 
 const overpassUrl = process.env.EXPO_PUBLIC_OVERPASS_URL ?? 'https://overpass-api.de/api/interpreter';
 export const CORRIDOR_METERS = 750;
@@ -14,6 +14,37 @@ function webUrl(value: unknown): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function commonsImageUrl(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  const fileName = value.trim().replace(/^File:/i, '');
+  return fileName ? `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=240` : undefined;
+}
+
+function foodTags(tags: Record<string, unknown>): string[] {
+  return ['cuisine', 'dish', 'food', 'description', 'name', 'speciality', 'cuisine:speciality']
+    .map((key) => tags[key])
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    .map((value) => value.trim());
+}
+
+function ratingNumber(value: unknown): number | undefined {
+  if (typeof value !== 'number' && typeof value !== 'string') return undefined;
+  const parsed = Number(String(value).trim().replace(',', '.'));
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 5) return undefined;
+  return Math.round(parsed * 10) / 10;
+}
+
+function placeRating(tags: Record<string, unknown>): number | undefined {
+  return ratingNumber(tags.rating ?? tags['rating:score']);
+}
+
+function placeRatingCount(tags: Record<string, unknown>): number | undefined {
+  const value = tags['rating:count'] ?? tags.review_count ?? tags['review:count'];
+  if (typeof value !== 'number' && typeof value !== 'string') return undefined;
+  const parsed = Number(String(value).trim());
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
 /** Distance to the polyline, not a driving detour or ETA. */
@@ -35,6 +66,7 @@ export function distanceFromRoute(point: Coordinate, route: Coordinate[]): numbe
 
 export async function findPlaces(route: RouteData): Promise<Candidate[]> {
   if (route.distanceMeters > MAX_ROUTE_METERS) throw new Error('routeTooLong');
+  if (!route.coordinates.length || route.coordinates.some((point) => !isVietnamCoordinate(point))) throw new Error('unsupportedRegion');
   const latitudes = route.coordinates.map((p) => p.latitude);
   const longitudes = route.coordinates.map((p) => p.longitude);
   const south = Math.min(...latitudes), north = Math.max(...latitudes);
@@ -43,7 +75,7 @@ export async function findPlaces(route: RouteData): Promise<Candidate[]> {
   const dy = CORRIDOR_METERS / 111320;
   const dx = dy / Math.cos(Math.max(Math.abs(south), Math.abs(north)) * Math.PI / 180);
   const bbox = [south - dy, west - dx, north + dy, east + dx].join(',');
-  const query = `[out:json][timeout:20];nwr["amenity"~"^(restaurant|cafe|fast_food|food_court)$"]["name"](${bbox});out center tags;`;
+  const query = `[out:json][timeout:20];area["ISO3166-1"="VN"]->.vietnam;nwr["amenity"~"^(restaurant|cafe|fast_food|food_court)$"]["name"](${bbox})(area.vietnam);out center tags;`;
   const payload = await cachedRequest(overpassUrl, 900000, {
     method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ data: query }).toString(),
   });
@@ -53,7 +85,7 @@ export async function findPlaces(route: RouteData): Promise<Candidate[]> {
   for (const element of payload.elements) {
     const tags = element.tags;
     const coordinate = { latitude: element.lat ?? element.center?.lat, longitude: element.lon ?? element.center?.lon };
-    if (!isCoordinate(coordinate) || typeof tags?.name !== 'string' || !tags.name.trim()
+    if (!isCoordinate(coordinate) || !isVietnamCoordinate(coordinate) || typeof tags?.name !== 'string' || !tags.name.trim()
       || !['restaurant', 'cafe', 'fast_food', 'food_court'].includes(tags.amenity)
       || !['node', 'way', 'relation'].includes(element.type) || !Number.isInteger(element.id)) continue;
     const distance = distanceFromRoute(coordinate, route.coordinates);
@@ -62,6 +94,8 @@ export async function findPlaces(route: RouteData): Promise<Candidate[]> {
     if (seen.has(id)) continue;
     seen.add(id);
     const stringTag = (key: string) => typeof tags[key] === 'string' ? tags[key] : undefined;
+    const rating = placeRating(tags);
+    const ratingCount = placeRatingCount(tags);
     const place: Place = {
       id, name: tags.name.trim(), coordinate, category: tags.amenity,
       cuisine: stringTag('cuisine')?.replaceAll(';', ', ').replaceAll('_', ' '),
@@ -69,6 +103,10 @@ export async function findPlaces(route: RouteData): Promise<Candidate[]> {
       openingHours: stringTag('opening_hours'),
       websiteUrl: webUrl(tags.website ?? tags['contact:website']),
       menuUrl: webUrl(tags.menu ?? tags['contact:menu']),
+      imageUrl: webUrl(tags.image) ?? commonsImageUrl(tags.wikimedia_commons),
+      foodTags: foodTags(tags),
+      ...(rating !== undefined ? { rating } : {}),
+      ...(ratingCount !== undefined ? { ratingCount } : {}),
       vegetarian: ['yes', 'only'].includes(tags['diet:vegetarian']) || ['yes', 'only'].includes(tags['diet:vegan']),
       sourceUrl: `https://www.openstreetmap.org/${id}`, fetchedAt: new Date().toISOString(),
     };

@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, BackHandler, Linking, Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import './src/i18n';
 import { useBiteLane } from './src/hooks/useBiteLane';
@@ -14,8 +15,13 @@ import type { FoodOffer, MainTab, Place } from './src/types';
 import { colors } from './src/theme';
 
 export default function App() {
+  return <SafeAreaProvider><AppContent /></SafeAreaProvider>;
+}
+
+function AppContent() {
   const app = useBiteLane();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<MainTab>('home');
   const [overlay, setOverlay] = useState<'setup' | 'map' | null>(null);
   const [place, setPlace] = useState<Place | null>(null);
@@ -36,9 +42,10 @@ export default function App() {
   const openOffer = (target: FoodOffer) => { setOffer(target); setPlace(null); setReportOnOpen(false); };
   const openPlace = (target: Place, startReport = false) => { setPlace(target); setOffer(null); setOverlay(null); setReportOnOpen(startReport); };
   const closePlace = () => { setPlace(null); setReportOnOpen(false); };
-  return <SafeAreaView style={styles.safe}>
+  return <View style={styles.root}>
     <StatusBar style="dark" />
-    <View style={styles.app}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
+      <View style={styles.app}>
       <View style={styles.header}>
         <Text style={styles.logo}>BiteLane<Text style={{ color: colors.accent }}>.</Text></Text>
         <Pressable accessibilityRole="button" accessibilityLabel={t('app.changeLanguage')} style={styles.language} onPress={() => app.setState((s) => ({ ...s, language: s.language === 'en' ? 'vi' : 'en' }))}>
@@ -61,12 +68,15 @@ export default function App() {
       {Platform.OS === 'web' ? <Pressable accessibilityRole="link" onPress={() => { void Linking.openURL('https://www.openstreetmap.org/copyright').catch(() => {}); }} style={styles.attribution}>
         <Text style={styles.attributionText}>© OpenStreetMap contributors · ODbL</Text>
       </Pressable> : null}
-      {!place && !offer && !overlay && app.ready ? <BottomTabBar selectedTab={tab} onSelect={setTab} /> : null}
-    </View>
-  </SafeAreaView>;
+      </View>
+    </SafeAreaView>
+    {!place && !offer && !overlay && app.ready ? <View style={styles.bottomDock}>
+      <BottomTabBar bottomInset={insets.bottom} selectedTab={tab} onSelect={setTab} />
+    </View> : null}
+  </View>;
 }
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background }, app: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center' },
+  root: { flex: 1, backgroundColor: colors.background }, safe: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', backgroundColor: colors.background }, app: { flex: 1, width: '100%' }, bottomDock: { width: '100%', maxWidth: 760, alignSelf: 'center', backgroundColor: colors.white },
   content: { flex: 1 }, header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 10 },
   logo: { color: colors.forest, fontSize: 25, fontWeight: '800' }, language: { padding: 12, minHeight: 44 }, languageText: { color: colors.forest, fontWeight: '600' },
   attribution: { alignItems: 'center', padding: 8 }, attributionText: { fontSize: 10, color: colors.secondaryText },

@@ -6,10 +6,21 @@ export function isCoordinate(value: unknown): value is Coordinate {
   return Number.isFinite(p.latitude) && Math.abs(p.latitude) <= 90
     && Number.isFinite(p.longitude) && Math.abs(p.longitude) <= 180;
 }
+
+// A coarse safety envelope for Vietnam. Provider country codes remain the
+// authoritative filter for search results; this fence protects stored data,
+// route requests, and provider geometry from obviously foreign coordinates.
+export function isVietnamCoordinate(value: unknown): value is Coordinate {
+  if (!isCoordinate(value)) return false;
+  return value.latitude >= 8.0 && value.latitude <= 23.6
+    && value.longitude >= 102.0 && value.longitude <= 109.8;
+}
+
 function isAddress(value: unknown): value is AddressSuggestion {
   if (!value || typeof value !== 'object') return false;
   const p = value as AddressSuggestion;
-  return typeof p.id === 'string' && typeof p.label === 'string' && !!p.label && isCoordinate(p.coordinate);
+  return typeof p.id === 'string' && typeof p.label === 'string' && !!p.label && isVietnamCoordinate(p.coordinate)
+    && (p.countryCode === undefined || p.countryCode === 'VN');
 }
 export function isJourney(value: unknown): value is Journey {
   if (!value || typeof value !== 'object') return false;
@@ -20,12 +31,15 @@ function isPlace(value: unknown): value is Place {
   if (!value || typeof value !== 'object') return false;
   const p = value as Place;
   return typeof p.id === 'string' && /^(node|way|relation)\/\d+$/.test(p.id)
-    && typeof p.name === 'string' && !!p.name && isCoordinate(p.coordinate)
+    && typeof p.name === 'string' && !!p.name && isVietnamCoordinate(p.coordinate)
     && ['restaurant', 'cafe', 'fast_food', 'food_court'].includes(p.category)
     && typeof p.vegetarian === 'boolean' && Number.isFinite(Date.parse(p.fetchedAt))
     && p.sourceUrl === `https://www.openstreetmap.org/${p.id}`
     && [p.address, p.cuisine, p.openingHours].every((x) => x === undefined || typeof x === 'string')
-    && [p.websiteUrl, p.menuUrl].every((x) => x === undefined || isWebUrl(x));
+    && (p.foodTags === undefined || (Array.isArray(p.foodTags) && p.foodTags.every((x) => typeof x === 'string')))
+    && (p.rating === undefined || (typeof p.rating === 'number' && Number.isFinite(p.rating) && p.rating >= 0 && p.rating <= 5))
+    && (p.ratingCount === undefined || (Number.isInteger(p.ratingCount) && p.ratingCount >= 0))
+    && [p.websiteUrl, p.menuUrl, p.imageUrl].every((x) => x === undefined || isWebUrl(x));
 }
 function isWebUrl(value: unknown): value is string {
   if (typeof value !== 'string') return false;

@@ -4,13 +4,15 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { colors } from '../theme';
+import { formatRating } from '../services/format';
 import type { Coordinate } from '../types';
 import type { MapPreviewProps } from './MapPreview';
+import { PlaceThumbnail } from './PlaceThumbnail';
 
 const emptyCoordinates: Coordinate[] = [];
 
-export function MapPreview({ route, isLoading = false, error, fullScreen = false, places = [], onPlacePress }: MapPreviewProps) {
-  const { t } = useTranslation();
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, height = 138, places = [], onPlacePress }: MapPreviewProps) {
+  const { i18n, t } = useTranslation();
   const mapRef = useRef<MapView>(null);
   const coordinates = useMemo(
     () => (route?.coordinates.length ? route.coordinates : emptyCoordinates),
@@ -24,7 +26,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
     : live && error
       ? t('commute.mapDataWarning')
       : live
-        ? t('commute.liveRoute')
+        ? t(route?.mode === 'driving' ? 'commute.roadRoute' : 'commute.liveRoute')
         : error
           ? t('commute.routeFallback')
           : t('commute.routePreview');
@@ -38,14 +40,25 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
     }
   };
 
+  const initialRegion = useMemo(() => {
+    const latitudes = coordinates.map((point) => point.latitude);
+    const longitudes = coordinates.map((point) => point.longitude);
+    const latitude = latitudes.length ? (Math.min(...latitudes) + Math.max(...latitudes)) / 2 : 10.7769;
+    const longitude = longitudes.length ? (Math.min(...longitudes) + Math.max(...longitudes)) / 2 : 106.7009;
+    const latitudeDelta = Math.max(0.02, (Math.max(...latitudes, latitude) - Math.min(...latitudes, latitude)) * 1.5);
+    const longitudeDelta = Math.max(0.02, (Math.max(...longitudes, longitude) - Math.min(...longitudes, longitude)) * 1.5);
+    return { latitude, longitude, latitudeDelta, longitudeDelta };
+  }, [coordinates]);
+
   useEffect(() => {
     fitRoute();
   }, [coordinates]);
 
   return (
-    <View style={[styles.container, fullScreen && styles.fullScreenContainer]}>
+    <View style={[styles.container, !fullScreen && { height }, fullScreen && styles.fullScreenContainer]}>
       {coordinates.length > 1 ? <MapView
         ref={mapRef}
+        initialRegion={initialRegion}
         onMapReady={fitRoute}
         pitchEnabled={false}
         rotateEnabled={false}
@@ -63,7 +76,12 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
         ) : null}
         <Marker coordinate={start} pinColor={colors.forest} />
         <Marker coordinate={end} pinColor={colors.accent} />
-        {places.map((place) => <Marker key={place.id} coordinate={place.coordinate} title={place.name} pinColor={colors.forest} onPress={() => onPlacePress?.(place)} />)}
+        {places.map((place) => <Marker key={place.id} coordinate={place.coordinate} description={place.rating !== undefined ? t('app.ratingLabel', { value: formatRating(place.rating, i18n.language === 'vi' ? 'vi-VN' : 'en-US') }) : undefined} title={place.name} onPress={() => onPlacePress?.(place)}>
+          <View style={styles.marker}>
+            <PlaceThumbnail accessibilityLabel={place.name} place={place} size={42} tone="green" />
+            {place.rating !== undefined ? <View style={styles.pinRating}><Text style={styles.pinRatingText}>★{formatRating(place.rating, i18n.language === 'vi' ? 'vi-VN' : 'en-US')}</Text></View> : null}
+          </View>
+        </Marker>)}
       </MapView> : null}
       <View style={styles.statusPill}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
@@ -90,6 +108,27 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
+  },
+  marker: {
+    height: 42,
+    position: 'relative',
+    width: 42,
+  },
+  pinRating: {
+    backgroundColor: colors.yellow,
+    borderColor: colors.peach,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 3,
+    paddingVertical: 1,
+    position: 'absolute',
+    right: -12,
+    top: -8,
+  },
+  pinRatingText: {
+    color: colors.accent,
+    fontSize: 9,
+    fontWeight: '800',
   },
   statusPill: {
     alignItems: 'center',

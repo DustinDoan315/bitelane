@@ -6,6 +6,7 @@ import { findPlaces } from '../services/placeService';
 import { findFoodOffers } from '../services/menuService';
 import { getCommuteRoute } from '../services/routeService';
 import { parseStoredState } from '../services/validation';
+import { matchesFoodType, normalizeFood } from '../services/foodSuggestionService';
 
 const STORAGE_KEY = 'bitelane:v1';
 const initialState = (): StoredState => ({
@@ -71,7 +72,14 @@ export function useBiteLane() {
     return candidates.filter(({ place }) => (!state.preferences.vegetarianOnly || place.vegetarian)
       && (!state.preferences.hideVisited || !visited.has(place.id)));
   }, [candidates, state.preferences, state.visits]);
-  const offers = useMemo(() => findFoodOffers(visible, state.reports, state.budget), [visible, state.reports, state.budget]);
+  const foodVisible = useMemo(() => {
+    const query = normalizeFood(state.budget.dishQuery);
+    const reportedFoodPlaceIds = query
+      ? new Set(state.reports.filter((report) => normalizeFood(report.itemName).includes(query)).map((report) => report.placeId))
+      : new Set<string>();
+    return visible.filter(({ place }) => matchesFoodType(place, query) || reportedFoodPlaceIds.has(place.id));
+  }, [visible, state.budget.dishQuery, state.reports]);
+  const offers = useMemo(() => findFoodOffers(foodVisible, state.reports, state.budget), [foodVisible, state.reports, state.budget]);
 
   const toggleSaved = (place: Place) => setState((current) => ({ ...current,
     saved: current.saved.some((p) => p.id === place.id) ? current.saved.filter((p) => p.id !== place.id) : [place, ...current.saved],
@@ -89,5 +97,5 @@ export function useBiteLane() {
   }));
 
   const setBudget = (budget: BudgetSettings) => setState((current) => ({ ...current, budget }));
-  return { state, setState, ready, storageError, route, visible, offers, phase, error, refresh, toggleSaved, recordVisit, addMenuReport, setBudget };
+  return { state, setState, ready, storageError, route, visible: foodVisible, offers, phase, error, refresh, toggleSaved, recordVisit, addMenuReport, setBudget };
 }

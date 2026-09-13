@@ -21,8 +21,8 @@ type RouteMapScreenProps = {
 
 export function RouteMapScreen({ journey, places, error, isLoading = false, onBack, onOpenPlace, onRetry, route }: RouteMapScreenProps) {
   const { t } = useTranslation();
-  const routeMeta = route?.source === 'live'
-    ? t('app.routeMeta', { minutes: Math.round(route.durationSeconds / 60), km: (route.distanceMeters / 1000).toFixed(1) })
+  const routeDistance = route?.source === 'live'
+    ? t('app.routeDistance', { km: (route.distanceMeters / 1000).toFixed(1) })
     : t('commute.routeUnavailableMeta');
 
   return (
@@ -53,7 +53,7 @@ export function RouteMapScreen({ journey, places, error, isLoading = false, onBa
         <Text numberOfLines={1} style={styles.addresses}>
           {journey.origin.label} → {journey.destination.label}
         </Text>
-        <Text style={styles.routeMeta}>{routeMeta}</Text>
+        <Text style={styles.routeDistance}>{routeDistance}</Text>
         {error ? <Text accessibilityRole="alert" style={styles.warning}>{t(`app.errors.${error}`, { defaultValue: t('app.errors.serviceUnavailable') })}</Text> : <Text style={styles.hint}>{t('commute.mapPlaceHint')}</Text>}
         <PrimaryButton disabled={isLoading} iconName="refresh" labelKey="commute.refreshRoute" onPress={onRetry} />
       </View>
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
-  routeMeta: {
+  routeDistance: {
     color: colors.secondaryText,
     fontSize: 14,
   },

@@ -13,10 +13,11 @@ async function main() {
   const origins = await searchAddresses(start);
   const destinations = await searchAddresses(end);
   assert.ok(origins.length && destinations.length, 'Both live address searches must return results');
+  assert.ok([...origins, ...destinations].every((result) => result.countryCode === 'VN'), 'All live address suggestions must be in Vietnam');
   const journey = { origin: origins[0], destination: destinations[0] };
   const route = await getCommuteRoute(journey);
   console.log('Resolved live journey:', journey.origin.label, '→', journey.destination.label, `(${(route.distanceMeters / 1000).toFixed(1)} km)`);
-  assert.ok(route.coordinates.length > 1 && route.distanceMeters > 0 && route.durationSeconds > 0);
+  assert.ok(route.coordinates.length > 1 && route.distanceMeters > 0 && route.durationSeconds > 0 && route.mode === 'motorcycle');
   const candidates = await findPlaces(route);
   assert.ok(candidates.length, 'Use a food-serving corridor for this smoke check; provider coverage may be empty');
   assert.ok(candidates.every((c) => c.distanceFromRouteMeters <= CORRIDOR_METERS));
@@ -45,6 +46,7 @@ async function main() {
   assert.ok(stop.coordinates.length > 1);
   const url = new URL(getNavigationUrl(place));
   assert.equal(url.searchParams.get('destination'), `${place.coordinate.latitude},${place.coordinate.longitude}`);
+  assert.equal(url.searchParams.get('travelmode'), 'two-wheeler');
   const state = { version: 2, journey, preferences: { vegetarianOnly: false, hideVisited: false }, budget: { maxVndPerPerson: 50000, dishQuery: '' }, reports: [], saved: [place], visits: [{ id: 'live-verification', place, visitedAt: new Date().toISOString() }], language: 'en' };
   assert.deepEqual(parseStoredState(JSON.stringify(state)), JSON.parse(JSON.stringify(state)));
   console.log(JSON.stringify({ origin: journey.origin.label, destination: journey.destination.label, routeKm: route.distanceMeters / 1000, places: candidates.length, checkedPlace: place.name, source: place.sourceUrl, extraMinutes: Math.max(0, stop.durationSeconds - route.durationSeconds) / 60, status: 'PASS' }, null, 2));

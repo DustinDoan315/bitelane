@@ -8,7 +8,7 @@ Date: 2026-09-08 (Asia/Ho_Chi_Minh)
 - `npx expo-doctor`: 21/21 checks passed after adding the required `expo-font` peer dependency and updating Expo from 57.0.19 to 57.0.20.
 - `npx expo export --platform web`: passed; production web bundle emitted to ignored `dist/`.
 - `git diff --check`: passed.
-- `npm run verify:live -- "Ben Thanh Market, Ho Chi Minh City" "Saigon Zoo, Ho Chi Minh City"`: passed against live Photon, OSRM, and Overpass data. It resolved both places, returned a 2.3236 km road route and 665 food candidates within the route corridor, validated an OSM source record, requested a route through that place, checked its destination URL, and round-tripped the persisted schema. Provider counts and place order can change with live data.
+- `npm run verify:live -- "Ben Thanh Market, Ho Chi Minh City" "Saigon Zoo, Ho Chi Minh City"`: passed against live Photon, Valhalla motorcycle, and Overpass data. It resolved both places, returned a 2.82 km motorcycle route and 623 food candidates within the route corridor, validated an OSM source record, requested a route through that place, checked its two-wheeler destination URL, and round-tripped the persisted schema. Provider counts and place order can change with live data.
 
 ## Browser check (390 × 844)
 
@@ -17,14 +17,14 @@ Date: 2026-09-08 (Asia/Ho_Chi_Minh)
 - Selected journey loaded real venue cards; the full route map opened through its explicit action.
 - Clear full-map button opened a fitted road route at mobile width; the old transparent map interaction was found unreliable and replaced. Unconfigured satellite/CARTO layers were removed.
 - Place details showed only available fields, source timestamp, source link, and unknown-price text.
-- Budget settings accepted a per-person limit and optional dish query. Results stayed unchanged while fields were edited and changed only after applying the budget. A real local report for Cơm tấm at 45,000₫ appeared under a 50k budget, disappeared at 30k, and returned after reload; the result showed the dish, price, mapped venue, and unverified report label.
+- Budget settings accepted a per-person limit and optional dish query. Results stayed unchanged while fields were edited and changed only after applying the budget. A real local report for Cơm tấm at 45,000 VND appeared under a 50,000 VND budget, disappeared at 30,000 VND, and returned after reload; the result showed the dish, price, mapped venue, and unverified report label.
 - Discover now shows only priced food matches; the former Nearby venues directory is removed. Selecting the Cơm tấm result opens a food/store detail view with the dish, reported price, venue identity, address, map, directions, save, visit, and price-report actions.
 - Calculate-stop returned a route through the selected venue and displayed the difference from the base route.
 - Save changed the control state; Saved retained the venue after a full browser reload.
 - Confirm visit created one timestamped History event; History retained it after reload; undo restored the empty state.
 - English/Vietnamese switching updated current UI and persisted language.
 - No browser runtime errors or framework error overlay occurred. Development-only React Native Web deprecation warnings remain for legacy shadow style properties in the existing map controls.
-- A fresh-install budget check at 100,000₫ returned 40 labeled meal estimates from 665 live route venues; the first eight rendered with ranges such as 20,000₫–70,000₫ and did not require a local report. Selecting an estimate opened detail without presenting it as an exact dish. Exact named reports remain preferred when the optional food-name query is used.
+- A fresh-install budget check at 100,000 VND returned 40 labeled meal estimates from the live route venues; the first eight rendered with VND ranges and did not require a local report. Selecting an estimate opened detail without presenting it as an exact dish. Exact named reports remain preferred when the optional food-name query is used.
 
 ## Security and dependency review
 

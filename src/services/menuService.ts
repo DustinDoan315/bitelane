@@ -1,5 +1,5 @@
 import type { BudgetSettings, Candidate, FoodOffer, MenuReport, Place, PriceRangeVnd } from '../types';
-import { getCanonicalFoodLabel, getEstimatedFoodName } from './foodSuggestionService';
+import { getCanonicalFoodLabel, getEstimatedFoodName, matchesFoodType } from './foodSuggestionService';
 
 const normalize = (value: string) => value
   .toLocaleLowerCase('vi-VN')
@@ -41,8 +41,12 @@ export function estimateMealPriceRange(place: Place): PriceRangeVnd {
  * a verified menu item.
  */
 export function findFoodOffers(candidates: Candidate[], reports: MenuReport[], budget: BudgetSettings): FoodOffer[] {
-  const places = new Map(candidates.map((candidate) => [candidate.place.id, candidate]));
   const query = normalize(budget.dishQuery);
+  const reportedFoodPlaceIds = query
+    ? new Set(reports.filter((report) => normalize(report.itemName).includes(query)).map((report) => report.placeId))
+    : new Set<string>();
+  const foodCandidates = candidates.filter(({ place }) => matchesFoodType(place, budget.dishQuery) || reportedFoodPlaceIds.has(place.id));
+  const places = new Map(foodCandidates.map((candidate) => [candidate.place.id, candidate]));
   const latest = new Map<string, MenuReport>();
   for (const report of reports) {
     const candidate = places.get(report.placeId);
@@ -72,7 +76,7 @@ export function findFoodOffers(candidates: Candidate[], reports: MenuReport[], b
   const requestedFood = query ? getCanonicalFoodLabel(budget.dishQuery) : undefined;
   if (query && !requestedFood) return reportedOffers;
 
-  const estimatedOffers: FoodOffer[] = candidates.flatMap((candidate) => {
+  const estimatedOffers: FoodOffer[] = foodCandidates.flatMap((candidate) => {
     if (placesWithReportedMatches.has(candidate.place.id)) return [];
     const priceRangeVnd = estimateMealPriceRange(candidate.place);
     if (priceRangeVnd.min > budget.maxVndPerPerson) return [];

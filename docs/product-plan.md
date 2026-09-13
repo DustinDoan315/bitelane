@@ -15,15 +15,15 @@ The prior app displayed static meals, prices, ratings, detours, and yesterday's 
 - Place details: available cuisine/address/raw opening-hours information, source and retrieval time, optional routing through the stop, and directions to the actual place coordinate.
 - Saved: persistent future shortlist with add/remove and detail access.
 - History: persistent, dated, user-confirmed visits; reversible mistaken entries. Navigation clicks do not imply eating.
-- Empty, loading, unavailable, unsupported-route, and local-storage failure states. English and Vietnamese. Responsive width and native map support.
+- Empty, loading, unavailable, unsupported-route, and local-storage failure states. Vietnamese-first UI with English available. Responsive width and native map support.
 
 ## Known constraints
 
-Discovery currently uses car routing, without traffic. Motorbike routing is essential before a Vietnam commuter launch; do not advertise support until the provider supports it and local route tests pass. Distances from the route are approximate geometric distances, not access feasibility; a river or divided road can make a nearby venue inconvenient. The detail calculation estimates the routed stop cost but excludes waiting, parking, and meals. Nearby venues may have incomplete or stale OSM tags. Estimated prices are product heuristics, not menu data. Saved snapshots are historical copies with retrieval dates, not freshly verified listings.
+Discovery now defaults to Valhalla's actual motorcycle costing profile, without traffic. Distances from the route are approximate geometric distances, not access feasibility; a river or divided road can make a nearby venue inconvenient. The detail calculation estimates the routed stop cost but excludes waiting, parking, and meals. Nearby venues may have incomplete or stale OSM tags. Estimated prices are product heuristics, not menu data. Saved snapshots are historical copies with retrieval dates, not freshly verified listings.
 
 ## Next release: prove a reliable core
 
-1. Select managed geocoding, local place coverage, and motorbike routing providers. Evaluate at least several actual commute corridors with local users; compare returned locations, entrances, opening hours, duplicate listings, and legal road access.
+1. Select managed geocoding, local place coverage, and production motorbike routing providers. Evaluate at least several actual commute corridors with local users; compare returned locations, entrances, opening hours, duplicate listings, and legal road access.
 2. Introduce a backend provider gateway with server-side credentials, shared caching, rate limits, budgets, monitoring, and licensed data retention. Replace development endpoints and validate CORS/native credentials. Public community servers are not the production backend.
 3. Add current-location permission and map-pin selection for hard-to-geocode addresses. Keep manual landmark entry available and avoid unsolicited background location collection.
 4. Replace local-only reports and heuristics with a merchant or licensed menu catalog. Model each result as food item → price → merchant → source timestamp, and only call a result verified when the source supports that claim. Reviews can enrich a result but cannot become the price source on their own. If Google Places is selected, use its price range/rating only under its display, attribution, and storage policies; it does not provide a reliable item-level menu feed.
@@ -41,6 +41,6 @@ Keep basic discovery, directions, and a useful saved list free. Candidate paid v
 
 - [Nominatim public usage policy](https://operations.osmfoundation.org/policies/nominatim/): no autocomplete, application-wide limits, identification, caching, and provider switching. This revision removes that dependency.
 - [Photon project and demo policy](https://github.com/komoot/photon): real OSM geocoding; demo use only within reasonable limits, without availability guarantees.
-- [OSRM routing API](https://project-osrm.org/docs/v5.24.0/api/): routing through ordered coordinates and returned geometry/duration; profile semantics are determined by the server data.
+- [Valhalla routing API](https://valhalla.github.io/valhalla/api/turn-by-turn/api-reference/): routing through ordered coordinates, returned geometry/duration, and explicit costing profiles such as `motorcycle`.
 - [Overpass resource policy](https://dev.overpass-api.de/overpass-doc/en/preface/commons.html): shared resources and load shedding; production applications need sustainable capacity.
 - [OSM tile usage policy](https://operations.osmfoundation.org/policies/tiles/): attribution, caching, no bulk download/prefetch.

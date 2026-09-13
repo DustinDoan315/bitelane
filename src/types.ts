@@ -1,8 +1,9 @@
 export type MainTab = 'home' | 'history' | 'saved';
 export type Coordinate = { latitude: number; longitude: number };
-export type AddressSuggestion = { id: string; label: string; coordinate: Coordinate };
+export type AddressSuggestion = { id: string; label: string; coordinate: Coordinate; countryCode?: 'VN' };
 export type Journey = { origin: AddressSuggestion; destination: AddressSuggestion };
-export type RouteData = { coordinates: Coordinate[]; distanceMeters: number; durationSeconds: number; source: 'live' };
+export type RouteMode = 'motorcycle' | 'driving';
+export type RouteData = { coordinates: Coordinate[]; distanceMeters: number; durationSeconds: number; mode: RouteMode; source: 'live' };
 export type Place = {
   id: string;
   name: string;
@@ -13,6 +14,10 @@ export type Place = {
   openingHours?: string;
   websiteUrl?: string;
   menuUrl?: string;
+  imageUrl?: string;
+  foodTags?: string[];
+  rating?: number;
+  ratingCount?: number;
   vegetarian: boolean;
   sourceUrl: string;
   fetchedAt: string;

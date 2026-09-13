@@ -11,14 +11,14 @@
 ## Provider boundary
 
 1. `routeService.searchAddresses`: Photon GeoJSON → validated selectable location.
-2. `routeService.getCommuteRoute`: selected coordinates → OSRM road geometry/distance/duration. No guessed address coordinates or fallback lines.
-3. `placeService.findPlaces`: bounded Overpass query → named food venues → 750 m route corridor filter → proximity ordering. Node/way/relation source IDs are retained, with optional contributor-listed website/menu URLs. Unknown fields remain absent.
-4. `PlaceDetailsScreen`: an explicit action requests start → place → destination; the duration difference is labeled as estimated extra driving time.
+2. `routeService.getCommuteRoute`: selected coordinates → Valhalla motorcycle geometry/distance/duration. An OSRM adapter remains available only for explicit development overrides. No guessed address coordinates or fallback lines.
+3. `placeService.findPlaces`: bounded Overpass query → named food venues → 750 m route corridor filter → proximity ordering. Node/way/relation source IDs are retained, with optional contributor-listed website/menu URLs, image URLs, and food metadata. Unknown fields remain absent. Missing images are resolved lazily through Wikimedia Commons using an exact venue-name match or a representative Vietnamese-food query.
+4. `PlaceDetailsScreen`: an explicit action requests start → place → destination; the duration difference is labeled as estimated extra motorbike time.
 5. `navigationService`: coordinate-based destination handoff. Does not write history.
 
 `transport` centralizes bounded short-lived caching, in-flight deduplication, timeouts, and HTTP errors. Provider payloads are untrusted; adapters validate expected fields before building domain values. No silent provider failover or fake data.
 
-`menuService` keeps price evidence separate from venue discovery. User reports become exact-but-unverified offers. When the food name is blank, a deterministic broad category/cuisine estimate creates up to 40 fallback options from real route venues; the UI labels these estimates and reports their range rather than inventing a named dish. A non-empty food query matches only named reports.
+`menuService` keeps price evidence separate from venue discovery. User reports become exact-but-unverified offers. When the food name is blank, a deterministic broad category/cuisine estimate creates up to 40 fallback options from real route venues; the UI labels these estimates and reports their range rather than inventing a named dish. A non-empty food query filters route venues using OSM name/cuisine/dish metadata and matching local reports before generating estimates.
 
 ## Persistence
 
@@ -37,4 +37,4 @@ AsyncStorage key `bitelane:v1` stores versioned `StoredState` schema version 2: 
 
 The three public development endpoints must be replaced by managed or self-hosted capacity. A server gateway should own credentials, shared quotas, caching/licensing, telemetry, and provider adapters. Add authentication only when implementing account sync or other account features. Define RLS and retention if a relational store is selected. No Supabase project, billing account, backend deployment, or paid service has been provisioned by this refactor.
 
-Routing supports driving only. A future provider must supply an actual motorbike profile before exposing that choice. Local reports and estimates make the budget flow useful immediately, but merchant or licensed menu data is required before promising verified availability or shared results. See the product plan for priorities and release gates.
+Routing defaults to Valhalla's actual `motorcycle` costing profile and keeps an OSRM-compatible driving adapter only for intentional development overrides. Local reports and estimates make the budget flow useful immediately, but merchant or licensed menu data is required before promising verified availability or shared results. See the product plan for priorities and release gates.

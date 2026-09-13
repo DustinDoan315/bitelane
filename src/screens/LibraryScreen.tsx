@@ -20,9 +20,16 @@ export function LibraryScreen({ kind, saved, visits, onOpen, onSave, onDiscover,
     </View>}
     ListEmptyComponent={<View style={styles.empty}><Text style={styles.body}>{t(`app.${kind}Empty`)}</Text><ActionButton label={t('app.explore')} onPress={onDiscover} /></View>}
     renderItem={({ item }) => <View style={styles.entry}>
-      <PlaceCard place={item.place} saved={saved.some((p) => p.id === item.place.id)} onSave={() => onSave(item.place)} onOpen={() => onOpen(item.place)}
-        subtitle={item.visitedAt ? new Date(item.visitedAt).toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }) : undefined} />
-      {kind === 'history' ? <ActionButton secondary label={t('app.undoVisit')} onPress={() => onRemoveVisit(item.id)} /> : null}
+      <PlaceCard
+        place={item.place}
+        saved={saved.some((p) => p.id === item.place.id)}
+        onSave={() => onSave(item.place)}
+        onOpen={() => onOpen(item.place)}
+        cornerActions={kind === 'history'}
+        onRemove={kind === 'history' ? () => onRemoveVisit(item.id) : undefined}
+        removeLabel={kind === 'history' ? t('app.undoVisit') : undefined}
+        subtitle={item.visitedAt ? new Date(item.visitedAt).toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }) : undefined}
+      />
     </View>} />;
 }
 const styles = StyleSheet.create({
