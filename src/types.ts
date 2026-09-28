@@ -57,4 +57,5 @@ export type StoredState = {
   saved: Place[];
   visits: Visit[];
   language: 'en' | 'vi';
+  hasSeenOnboarding: boolean;
 };

@@ -71,8 +71,9 @@ export function parseStoredState(raw: string): StoredState {
   const p = JSON.parse(raw) as Omit<StoredState, 'version'> & { version?: number };
   if (p?.version === 1) {
     if (!hasValidCoreState(p)) throw new Error('storageError');
-    return { ...p, version: 2, budget: defaultBudget, reports: [] } as StoredState;
+    return { ...p, version: 2, budget: defaultBudget, reports: [], hasSeenOnboarding: true } as StoredState;
   }
-  if (p?.version !== 2 || !hasValidCoreState(p) || !isBudget(p.budget) || !Array.isArray(p.reports) || !p.reports.every(isMenuReport)) throw new Error('storageError');
-  return p as StoredState;
+  if (p?.version !== 2 || !hasValidCoreState(p) || !isBudget(p.budget) || !Array.isArray(p.reports) || !p.reports.every(isMenuReport)
+    || (p.hasSeenOnboarding !== undefined && typeof p.hasSeenOnboarding !== 'boolean')) throw new Error('storageError');
+  return { ...p, hasSeenOnboarding: p.hasSeenOnboarding ?? true } as StoredState;
 }

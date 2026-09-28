@@ -12,7 +12,7 @@ const STORAGE_KEY = 'bitelane:v1';
 const initialState = (): StoredState => ({
   version: 2, journey: null, preferences: { vegetarianOnly: false, hideVisited: false },
   budget: { maxVndPerPerson: 50000, dishQuery: '' }, reports: [], saved: [], visits: [],
-  language: i18n.resolvedLanguage === 'vi' ? 'vi' : 'en',
+  language: i18n.resolvedLanguage === 'vi' ? 'vi' : 'en', hasSeenOnboarding: false,
 });
 
 export function useBiteLane() {

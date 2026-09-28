@@ -3,6 +3,12 @@ import { initReactI18next } from 'react-i18next';
 
 const en = {
   tabs: { pick: 'Discover', history: 'History', saved: 'Saved' },
+  onboarding: {
+    step: '{{current}} OF {{total}}', skip: 'Skip', back: 'Back', next: 'Next', start: 'Set my route', artLabel: 'BiteLane picks',
+    routeTitle: 'Good food, along your way.', routeBody: 'Set your start and destination to find places to eat along your route.',
+    mealTitle: 'Pick what fits.', mealBody: 'Choose a meal budget, search by dish, and filter for listed vegetarian options.',
+    saveTitle: 'Keep your good finds.', saveBody: 'Save places for later and record visits when you choose.',
+  },
   commute: {
     back: 'Back', updatingRoute: 'Finding a motorbike route…', liveRoute: 'Motorbike route', roadRoute: 'Road route', routeFallback: 'Route unavailable', routePreview: 'Set a route to see the map',
     openMap: 'Open route map', closeMap: 'Close map', fullMapTitle: 'Your route', fullMapSubtitle: 'Food along the way · tap a pin for details', mapPlaceHint: 'Tap a food pin to view details', refreshRoute: 'Refresh route', mapDataWarning: 'Some place data is unavailable',
@@ -49,6 +55,12 @@ const en = {
 
 const vi: typeof en = {
   tabs: { pick: 'Khám phá', history: 'Lịch sử', saved: 'Đã lưu' },
+  onboarding: {
+    step: '{{current}}/{{total}}', skip: 'Bỏ qua', back: 'Quay lại', next: 'Tiếp theo', start: 'Chọn tuyến đường', artLabel: 'Gợi ý từ BiteLane',
+    routeTitle: 'Quán ngon ngay trên đường đi.', routeBody: 'Chọn điểm đi và điểm đến để tìm quán ăn dọc tuyến đường.',
+    mealTitle: 'Chọn món phù hợp.', mealBody: 'Đặt ngân sách, tìm theo tên món và lọc quán có thông tin món chay.',
+    saveTitle: 'Lưu lại quán bạn thích.', saveBody: 'Lưu quán để ghé sau và tự ghi nhận những lần bạn đã ghé.',
+  },
   commute: {
     back: 'Quay lại', updatingRoute: 'Đang tìm đường xe máy…', liveRoute: 'Tuyến xe máy', roadRoute: 'Tuyến đường', routeFallback: 'Chưa có tuyến đường', routePreview: 'Chọn tuyến đường để xem bản đồ',
     openMap: 'Mở bản đồ tuyến đường', closeMap: 'Đóng bản đồ', fullMapTitle: 'Tuyến đường', fullMapSubtitle: 'Ăn uống dọc đường · chạm ghim để xem quán', mapPlaceHint: 'Chạm ghim quán để xem thông tin', refreshRoute: 'Tải lại tuyến đường', mapDataWarning: 'Một phần dữ liệu quán không khả dụng',

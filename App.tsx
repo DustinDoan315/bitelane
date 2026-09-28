@@ -9,6 +9,7 @@ import { BottomTabBar } from './src/components/BottomTabBar';
 import { DiscoverScreen } from './src/screens/DiscoverScreen';
 import { JourneySetupScreen } from './src/screens/JourneySetupScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
+import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { PlaceDetailsScreen } from './src/screens/PlaceDetailsScreen';
 import { RouteMapScreen } from './src/screens/RouteMapScreen';
 import type { FoodOffer, MainTab, Place } from './src/types';
@@ -32,11 +33,12 @@ function AppContent() {
       if (offer) { setOffer(null); return true; }
       if (place) { setPlace(null); setReportOnOpen(false); return true; }
       if (overlay) { setOverlay(null); return true; }
+      if (app.ready && !app.state.hasSeenOnboarding) { app.setState((s) => ({ ...s, hasSeenOnboarding: true })); return true; }
       if (tab !== 'home') { setTab('home'); return true; }
       return false;
     });
     return () => subscription.remove();
-  }, [offer, place, overlay, tab]);
+  }, [app.ready, app.state.hasSeenOnboarding, app.setState, offer, place, overlay, tab]);
   const retry = () => { if (app.state.journey) void app.refresh(app.state.journey); };
   const saved = (target: Place) => app.state.saved.some((p) => p.id === target.id);
   const openOffer = (target: FoodOffer) => { setOffer(target); setPlace(null); setReportOnOpen(false); };
@@ -57,6 +59,9 @@ function AppContent() {
         {!app.ready ? <ActivityIndicator style={{ flex: 1 }} color={colors.forest} />
           : offer ? <PlaceDetailsScreen key={`offer-${offer.id}`} offer={offer} place={offer.place} journey={app.state.journey} baseRoute={app.route} reports={app.state.reports.filter((report) => report.placeId === offer.place.id)} saved={saved(offer.place)} onSave={() => app.toggleSaved(offer.place)} onVisit={() => app.recordVisit(offer.place)} onReport={(itemName, priceVnd) => app.addMenuReport(offer.place, itemName, priceVnd)} onBack={() => setOffer(null)} />
           : place ? <PlaceDetailsScreen key={place.id} offer={null} place={place} journey={app.state.journey} baseRoute={app.route} reports={app.state.reports.filter((report) => report.placeId === place.id)} saved={saved(place)} initialReportOpen={reportOnOpen} onSave={() => app.toggleSaved(place)} onVisit={() => app.recordVisit(place)} onReport={(itemName, priceVnd) => app.addMenuReport(place, itemName, priceVnd)} onBack={closePlace} />
+          : !app.state.hasSeenOnboarding ? <OnboardingScreen
+            onSkip={() => app.setState((s) => ({ ...s, hasSeenOnboarding: true }))}
+            onStart={() => { app.setState((s) => ({ ...s, hasSeenOnboarding: true })); setOverlay('setup'); }} />
           : overlay === 'setup' ? <JourneySetupScreen journey={app.state.journey} onBack={() => setOverlay(null)} onSave={(journey) => { app.setState((s) => ({ ...s, journey })); setOverlay(null); setTab('home'); }} />
           : overlay === 'map' && app.state.journey ? <RouteMapScreen journey={app.state.journey} places={app.visible.slice(0, 30).map((c) => c.place)} route={app.route} error={app.error} isLoading={app.phase !== 'idle'} onBack={() => setOverlay(null)} onOpenPlace={openPlace} onRetry={retry} />
           : tab === 'home' ? <DiscoverScreen journey={app.state.journey} route={app.route} offers={app.offers} budget={app.state.budget} phase={app.phase} error={app.error}
@@ -70,7 +75,7 @@ function AppContent() {
       </Pressable> : null}
       </View>
     </SafeAreaView>
-    {!place && !offer && !overlay && app.ready ? <View style={styles.bottomDock}>
+    {!place && !offer && !overlay && app.state.hasSeenOnboarding && app.ready ? <View style={styles.bottomDock}>
       <BottomTabBar bottomInset={insets.bottom} selectedTab={tab} onSelect={setTab} />
     </View> : null}
   </View>;
