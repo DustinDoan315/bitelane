@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import 'leaflet/dist/leaflet.css';
 
 import { colors } from '../theme';
-import type { Coordinate, Place, RouteData } from '../types';
-import { formatRating } from '../services/format';
+import type { Coordinate, FoodOffer, Place, RouteData } from '../types';
+import { formatRating, formatVndCompact } from '../services/format';
 import { getPlaceImage } from '../services/placeImageService';
 
 export type MapPreviewProps = {
@@ -15,15 +15,21 @@ export type MapPreviewProps = {
   fullScreen?: boolean;
   height?: number;
   places?: Place[];
+  foodOffers?: FoodOffer[];
+  selectedOfferId?: string;
+  hideStatus?: boolean;
   onPlacePress?: (place: Place) => void;
+  onOfferPress?: (offer: FoodOffer) => void;
+  children?: ReactNode;
 };
 
 const emptyCoordinates: Coordinate[] = [];
 const emptyPlaces: Place[] = [];
+const emptyOffers: FoodOffer[] = [];
 
 type LeafletModule = typeof import('leaflet');
 
-function WebMap({ coordinates, fullScreen, live, places, onPlacePress, ratingLocale }: { coordinates: Coordinate[]; fullScreen: boolean; live: boolean; places: Place[]; onPlacePress?: (place: Place) => void; ratingLocale: string }) {
+function WebMap({ coordinates, fitCoordinates, fullScreen, hasOverlay, live, places, foodOffers, selectedOfferId, onPlacePress, onOfferPress, ratingLocale }: { coordinates: Coordinate[]; fitCoordinates: Coordinate[]; fullScreen: boolean; hasOverlay: boolean; live: boolean; places: Place[]; foodOffers: FoodOffer[]; selectedOfferId?: string; onPlacePress?: (place: Place) => void; onOfferPress?: (offer: FoodOffer) => void; ratingLocale: string }) {
   const mapElementRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import('leaflet').Map | null>(null);
   const leafletRef = useRef<LeafletModule | null>(null);
@@ -98,20 +104,27 @@ function WebMap({ coordinates, fullScreen, live, places, onPlacePress, ratingLoc
     let cancelled = false;
     const escapeHtml = (value: string) => value.replace(/[&<>\"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character] ?? character));
     const addMarkers = async () => {
-      const markerData = await Promise.all(places.map(async (place) => ({ place, imageUrl: await getPlaceImage(place) })));
+      const markerData = foodOffers.length
+        ? foodOffers.map((offer) => ({ place: offer.place, offer, imageUrl: null }))
+        : await Promise.all(places.map(async (place) => ({ place, offer: null, imageUrl: await getPlaceImage(place) })));
       if (cancelled) return;
-      placesRef.current = markerData.map(({ place, imageUrl }) => {
+      placesRef.current = markerData.map(({ place, offer, imageUrl }) => {
+        const selected = !!offer && offer.id === selectedOfferId;
+        const price = offer ? formatVndCompact(offer.priceRangeVnd.min, offer.priceRangeVnd.max) : null;
         const image = imageUrl ? `<img alt="" src="${escapeHtml(imageUrl)}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;transform:rotate(45deg);" />` : '<span style="font-size:18px;transform:rotate(45deg);">🍜</span>';
         const ratingBadge = place.rating !== undefined
           ? `<span style="background:#FFE8B6;border:1px solid #FFD9B5;border-radius:8px;color:#F45124;font-size:9px;font-weight:800;left:27px;line-height:14px;padding:0 3px;position:absolute;top:-8px;transform:rotate(45deg);white-space:nowrap;">★${formatRating(place.rating, ratingLocale)}</span>`
           : '';
+        const width = Math.max(62, Math.min(92, (price?.length ?? 0) * 8 + 20));
         const icon = leaflet.divIcon({
           className: 'bitelane-food-marker',
-          html: `<div style="align-items:center;background:#ffffff;border:3px solid #ffffff;border-radius:50% 50% 50% 0;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;height:42px;justify-content:center;position:relative;transform:rotate(-45deg);width:42px;">${image}${ratingBadge}</div>`,
-          iconAnchor: [21, 42], iconSize: [42, 42],
+          html: price
+            ? `<div style="align-items:center;background:${selected ? colors.accent : colors.forest};border:2px solid #fff;border-radius:18px;box-shadow:0 3px 10px rgba(0,0,0,.22);color:#fff;display:flex;font-size:12px;font-weight:800;height:31px;justify-content:center;min-width:${width}px;padding:0 8px;white-space:nowrap;">${escapeHtml(price)}</div>`
+            : `<div style="align-items:center;background:#ffffff;border:3px solid #ffffff;border-radius:50% 50% 50% 0;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;height:42px;justify-content:center;position:relative;transform:rotate(-45deg);width:42px;">${image}${ratingBadge}</div>`,
+          iconAnchor: price ? [width / 2, 16] : [21, 42], iconSize: price ? [width, 32] : [42, 42],
         });
         const marker = leaflet.marker([place.coordinate.latitude, place.coordinate.longitude], { icon, title: place.name }).addTo(map);
-        marker.on('click', () => onPlacePress?.(place));
+        marker.on('click', () => offer ? onOfferPress?.(offer) : onPlacePress?.(place));
         return marker;
       });
     };
@@ -121,7 +134,7 @@ function WebMap({ coordinates, fullScreen, live, places, onPlacePress, ratingLoc
       placesRef.current.forEach((marker) => marker.removeFrom(map));
       placesRef.current = [];
     };
-  }, [places, isReady, onPlacePress, ratingLocale]);
+  }, [places, foodOffers, isReady, onOfferPress, onPlacePress, ratingLocale, selectedOfferId]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -182,23 +195,25 @@ function WebMap({ coordinates, fullScreen, live, places, onPlacePress, ratingLoc
       })
       .addTo(map);
 
-    const bounds = leaflet.latLngBounds(latLngs);
+    const bounds = leaflet.latLngBounds(fitCoordinates.map(({ latitude, longitude }) => [latitude, longitude] as [number, number]));
     map.fitBounds(bounds, {
-      paddingTopLeft: [fullScreen ? 32 : 18, fullScreen ? 58 : 18],
+      paddingTopLeft: [fullScreen ? 32 : 18, fullScreen ? 58 : hasOverlay ? 82 : 18],
       paddingBottomRight: [fullScreen ? 32 : 18, fullScreen ? 210 : 18],
     });
-  }, [coordinates, fullScreen, isReady, live]);
+  }, [coordinates, fitCoordinates, fullScreen, hasOverlay, isReady, live]);
 
   return <div ref={mapElementRef} style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }} />;
 }
 
-export function MapPreview({ route, isLoading = false, error, fullScreen = false, height = 138, places = emptyPlaces, onPlacePress }: MapPreviewProps) {
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, height = 138, places = emptyPlaces, foodOffers = emptyOffers, selectedOfferId, hideStatus = false, onPlacePress, onOfferPress, children }: MapPreviewProps) {
   const { i18n, t } = useTranslation();
   const live = route?.source === 'live';
   const coordinates = useMemo(
     () => (route?.coordinates.length ? route.coordinates : emptyCoordinates),
     [route],
   );
+  const hasOverlay = !!children;
+  const fitCoordinates = useMemo(() => [...coordinates, ...foodOffers.map(({ place }) => place.coordinate)], [coordinates, foodOffers]);
   const statusLabel = isLoading
     ? t('commute.updatingRoute')
     : live && error
@@ -211,11 +226,12 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
 
   return (
     <View style={[styles.map, !fullScreen && { height }, fullScreen && styles.fullScreenMap]}>
-      {coordinates.length > 1 ? <WebMap coordinates={coordinates} fullScreen={fullScreen} live={live} places={places} onPlacePress={onPlacePress} ratingLocale={i18n.language === 'vi' ? 'vi-VN' : 'en-US'} /> : null}
-      <View style={styles.statusPill}>
+      {coordinates.length > 1 ? <WebMap coordinates={coordinates} fitCoordinates={fitCoordinates} fullScreen={fullScreen} hasOverlay={hasOverlay} live={live} places={places} foodOffers={foodOffers} selectedOfferId={selectedOfferId} onPlacePress={onPlacePress} onOfferPress={onOfferPress} ratingLocale={i18n.language === 'vi' ? 'vi-VN' : 'en-US'} /> : null}
+      {children}
+      {!hideStatus ? <View style={[styles.statusPill, children && styles.statusTop]}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
         <Text style={styles.statusText}>{statusLabel}</Text>
-      </View>
+      </View> : null}
     </View>
   );
 }
@@ -246,6 +262,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 21,
   },
+  statusTop: { bottom: undefined, top: 10 },
   statusText: {
     color: colors.forest,
     fontSize: 11,

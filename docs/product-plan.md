@@ -10,7 +10,7 @@ The prior app displayed static meals, prices, ratings, detours, and yesterday's 
 
 ## Implemented in this revision
 
-- Discover: address search after three typed characters, a real road route, and food-to-store matches from local reports plus clearly labeled category/cuisine estimates. The full route map remains available separately instead of repeating an unpriced venue directory.
+- Discover: a route-first map with a floating route summary and compact food-price pins; filters sit below the map, and selecting a pin shows its food, venue, price evidence, save action, and a routed extra-ride estimate. Budget and dish controls are compact until opened. Offers remain local reports or clearly labeled category/cuisine estimates.
 - Filters: vegetarian options explicitly tagged by contributors; hide user-confirmed visited places. Budget matching supports per-person limits and dish queries against named reports; blank queries include broad estimates for venues without menu data, while keeping every source label explicit.
 - Place details: available cuisine/address/raw opening-hours information, source and retrieval time, optional routing through the stop, and directions to the actual place coordinate.
 - Saved: persistent future shortlist with add/remove and detail access.

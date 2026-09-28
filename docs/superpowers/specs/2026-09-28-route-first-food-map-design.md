@@ -1,6 +1,6 @@
 # BiteLane route-first food map
 
-**Status:** Proposed design for review  
+**Status:** Implemented
 **Date:** 2026-09-28
 
 ## Goal
@@ -9,11 +9,12 @@ Help someone with a chosen trip quickly spot food stops on that route and decide
 
 ## Main flow
 
-1. Keep a compact origin → destination control at the top of Discover, with Edit.
+1. Float a compact origin → destination control over the top of the map with distance, duration, and Edit.
 2. Give the live route map most of the screen. Plot matching food venues on the route with compact price pins. Limit the initial map to the leading unique venues so pins remain readable.
-3. Tapping a pin selects its venue and matching food offer. Highlight the pin and show a bottom card with the dish/offer label, place name, price or range, and price evidence.
-4. Calculate the added riding time only for the selected stop. Reuse the existing routed-trip calculation for origin → place → destination and compare it with the base route. Show “+X min riding”; while calculating, use a small loading state. If the route estimate fails, omit the time instead of showing a straight-line estimate.
-5. Keep “View place” and a save control on the selected card; directions remain available in place details. Keep food, budget, and vegetarian filters available as compact controls below the route capsule.
+3. Put compact food, budget, and preference controls below the map. Expand the budget and dish controls only when requested.
+4. Tapping a pin selects its venue and matching food offer. Highlight the pin and show a selected-stop card below the map with the dish/offer label, place name, price or range, and price evidence.
+5. Calculate the added riding time only for the selected stop. Reuse the existing routed-trip calculation for origin → place → destination and compare it with the base route. Show “+X min riding”; while calculating, use a small loading state. If the route estimate fails, omit the time instead of showing a straight-line estimate.
+6. Keep “View place” and a save control on the selected card; directions remain available in place details.
 
 ## Map pins and price evidence
 
@@ -24,7 +25,7 @@ Help someone with a chosen trip quickly spot food stops on that route and decide
 
 ## Visual direction
 
-Use a polished map-first composition: a calm, high-contrast map; a clearly colored route; warm white floating route controls and selected-place card; one accent color for the selected food pin. Keep the selected card visually distinct and compact. Remove the Discover intro paragraphs, repeated map instructions, and always-expanded budget form. Preserve accessible names and selected states for map pins and controls.
+Use a polished map-first composition: a calm, high-contrast map; a clearly colored route; a warm white floating route pill; one accent color for the selected food pin; compact filters and selected-stop card below the map. Remove the Discover intro paragraphs, repeated map instructions, and always-expanded budget form. Preserve accessible names and selected states for map pins and controls.
 
 ## Scope
 
@@ -33,7 +34,7 @@ Redesign Discover and its food map markers for web and native. Reuse the current
 ## Acceptance criteria
 
 - A user with a route sees food pins on the route without opening a separate map screen.
-- Selecting a pin updates both its selected styling and the bottom card; selecting another pin replaces the card and invalidates the earlier detour request.
+- Selecting a pin updates both its selected styling and the card below the map; selecting another pin replaces the card and invalidates the earlier detour request.
 - The selected card shows existing price evidence and shows extra riding time only after a successful routed estimate.
 - No unselected pin shows a detour time; pin labels remain readable on web and native maps.
 - Editing the route clears stale selection/estimate state, while existing route setup, save, detail, and history flows remain usable.

@@ -1,5 +1,20 @@
 # BiteLane architecture
 
+## Selected stack
+
+- Client: Expo, React Native, and TypeScript; Leaflet on web and `react-native-maps` on native. Keep the existing client and map renderers for the route-first redesign.
+- Local state: AsyncStorage for saved trips, preferences, saves, visits, and price reports while the app is local-first.
+- Backend when cloud features are implemented: Supabase Auth and Postgres with Row Level Security. Enable PostGIS in a dedicated schema if BiteLane stores and searches its own venue coordinates. Use Supabase Edge Functions only when a provider secret or server-only operation is needed.
+- Subscriptions when a paid plan exists: RevenueCat for Apple App Store and Google Play purchases, entitlement checks, and cross-platform subscription status. RevenueCat's current pay-as-you-grow plan is free through $2,500 monthly tracked revenue, then 1% of tracked revenue. Expo requires a development build for its native purchase SDK. For web purchases, RevenueCat Billing uses Stripe; configure web products separately.
+- Managed location services for worldwide rollout: evaluate Mapbox routing and geocoding behind the existing service boundary. Keep public Photon, Valhalla, and Overpass endpoints for development only; select a sustainable venue-search and map-tile provider before broad release.
+- Build and updates: Expo EAS Free during development; review current quotas before public distribution.
+
+Use the active Supabase trial, then Supabase Free, for development and an early beta; do not assume a Pro subscription in the solo-dev budget. Free projects can pause after 7 days of low activity, so keep local features usable if cloud sync is unavailable. Reconsider paid hosting only when account sync or shared reports are validated and the budget supports it.
+
+If an always-on backend becomes necessary before Supabase Pro is affordable, evaluate Cloudflare Workers + D1: the free tier includes 100,000 Worker requests/day, 5 million D1 rows read/day, and 100,000 rows written/day; Workers Paid starts at $5/month and has larger included quotas. This option needs a separate consumer-auth design, so do not migrate to it solely to save money before cloud features are needed.
+
+Do not ship a subscription until BiteLane has a clear recurring premium benefit. Keep route discovery useful on the free plan and show price, renewal frequency, trial terms, and cancellation access clearly for any paid offer.
+
 ## Current implementation
 
 `App.tsx` coordinates three tabs and setup/map/detail overlays. Android hardware back closes overlays before changing tabs. No network logic or provider secrets live in screens.
@@ -26,7 +41,7 @@ AsyncStorage key `bitelane:v1` stores versioned `StoredState` schema version 2: 
 
 ## UI boundaries
 
-- Discover: setup/route summary → per-person budget and optional dish query → reported prices plus labeled estimates → filters → food-to-store detail. The full route map remains behind an explicit action; Discover does not repeat a separate venue directory.
+- Discover: live route map with a floating origin → destination pill and up to 12 unique price pins → compact food/budget and preference filters → selected offer card with evidence, local save, and routed extra-ride estimate. The full map and place details remain available.
 - Saved: intentions; saved place snapshots with detail access and unsave.
 - History: user-confirmed events, with timestamps and reversible mistakes.
 - Detail: available source fields, directions, calculate-stop, save, confirm visit, and a local unverified price-report form.
@@ -35,6 +50,6 @@ AsyncStorage key `bitelane:v1` stores versioned `StoredState` schema version 2: 
 
 ## Before a public launch
 
-The three public development endpoints must be replaced by managed or self-hosted capacity. A server gateway should own credentials, shared quotas, caching/licensing, telemetry, and provider adapters. Add authentication only when implementing account sync or other account features. Define RLS and retention if a relational store is selected. No Supabase project, billing account, backend deployment, or paid service has been provisioned by this refactor.
+The three public development endpoints must be replaced by managed or self-hosted capacity. A server gateway should own provider secrets, shared quotas, caching/licensing, telemetry, and provider adapters. When account sync or shared price reports are implemented, use Supabase Auth and define RLS policies and data retention before exposing tables. Keep Free-tier limitations and the solo-dev budget in the launch decision; no paid service is assumed or provisioned in this repository.
 
 Routing defaults to Valhalla's actual `motorcycle` costing profile and keeps an OSRM-compatible driving adapter only for intentional development overrides. Local reports and estimates make the budget flow useful immediately, but merchant or licensed menu data is required before promising verified availability or shared results. See the product plan for priorities and release gates.

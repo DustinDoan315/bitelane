@@ -1,6 +1,6 @@
 # BiteLane
 
-An Expo / React Native app for finding places to eat along a real journey, focused on Vietnam first. Web uses Leaflet; native uses `react-native-maps`.
+An Expo / React Native app for finding places to eat along a real journey, focused on Vietnam first. Web uses Leaflet; native uses `react-native-maps`. The app is currently local-first. Supabase is the selected backend for future account sync and shared price reports; RevenueCat is the selected subscription layer if paid plans are introduced. Neither is integrated yet.
 
 ## Run
 

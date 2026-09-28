@@ -8,16 +8,19 @@ import { formatRating } from '../services/format';
 import type { Coordinate } from '../types';
 import type { MapPreviewProps } from './MapPreview';
 import { PlaceThumbnail } from './PlaceThumbnail';
+import { formatVndCompact } from '../services/format';
 
 const emptyCoordinates: Coordinate[] = [];
 
-export function MapPreview({ route, isLoading = false, error, fullScreen = false, height = 138, places = [], onPlacePress }: MapPreviewProps) {
+export function MapPreview({ route, isLoading = false, error, fullScreen = false, height = 138, places = [], foodOffers = [], selectedOfferId, hideStatus = false, onPlacePress, onOfferPress, children }: MapPreviewProps) {
   const { i18n, t } = useTranslation();
   const mapRef = useRef<MapView>(null);
   const coordinates = useMemo(
     () => (route?.coordinates.length ? route.coordinates : emptyCoordinates),
     [route],
   );
+  const hasOverlay = !!children;
+  const fitCoordinates = useMemo(() => [...coordinates, ...foodOffers.map(({ place }) => place.coordinate)], [coordinates, foodOffers]);
   const start = coordinates[0];
   const end = coordinates[coordinates.length - 1];
   const live = route?.source === 'live';
@@ -32,27 +35,27 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
           : t('commute.routePreview');
 
   const fitRoute = () => {
-    if (coordinates.length > 1) {
-      mapRef.current?.fitToCoordinates(coordinates, {
+    if (fitCoordinates.length > 1) {
+      mapRef.current?.fitToCoordinates(fitCoordinates, {
         animated: false,
-        edgePadding: { top: fullScreen ? 78 : 42, right: 42, bottom: fullScreen ? 220 : 42, left: 42 },
+        edgePadding: { top: fullScreen ? 78 : hasOverlay ? 88 : 42, right: 42, bottom: fullScreen ? 220 : 42, left: 42 },
       });
     }
   };
 
   const initialRegion = useMemo(() => {
-    const latitudes = coordinates.map((point) => point.latitude);
-    const longitudes = coordinates.map((point) => point.longitude);
+    const latitudes = fitCoordinates.map((point) => point.latitude);
+    const longitudes = fitCoordinates.map((point) => point.longitude);
     const latitude = latitudes.length ? (Math.min(...latitudes) + Math.max(...latitudes)) / 2 : 10.7769;
     const longitude = longitudes.length ? (Math.min(...longitudes) + Math.max(...longitudes)) / 2 : 106.7009;
     const latitudeDelta = Math.max(0.02, (Math.max(...latitudes, latitude) - Math.min(...latitudes, latitude)) * 1.5);
     const longitudeDelta = Math.max(0.02, (Math.max(...longitudes, longitude) - Math.min(...longitudes, longitude)) * 1.5);
     return { latitude, longitude, latitudeDelta, longitudeDelta };
-  }, [coordinates]);
+  }, [fitCoordinates]);
 
   useEffect(() => {
     fitRoute();
-  }, [coordinates]);
+  }, [fitCoordinates, fullScreen, hasOverlay]);
 
   return (
     <View style={[styles.container, !fullScreen && { height }, fullScreen && styles.fullScreenContainer]}>
@@ -82,11 +85,20 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
             {place.rating !== undefined ? <View style={styles.pinRating}><Text style={styles.pinRatingText}>★{formatRating(place.rating, i18n.language === 'vi' ? 'vi-VN' : 'en-US')}</Text></View> : null}
           </View>
         </Marker>)}
+        {foodOffers.map((offer) => {
+          const selected = offer.id === selectedOfferId;
+          const price = formatVndCompact(offer.priceRangeVnd.min, offer.priceRangeVnd.max);
+          const foodName = offer.itemName ?? offer.requestedFood ?? offer.suggestedFood ?? t(`app.categories.${offer.place.category}`);
+          return <Marker key={offer.id} coordinate={offer.place.coordinate} description={`${foodName} · ${price}`} title={offer.place.name} onPress={() => onOfferPress?.(offer)}>
+            <View style={[styles.pricePin, selected && styles.pricePinSelected]}><Text numberOfLines={1} style={styles.pricePinText}>{price}</Text></View>
+          </Marker>;
+        })}
       </MapView> : null}
-      <View style={styles.statusPill}>
+      {children}
+      {!hideStatus ? <View style={[styles.statusPill, children && styles.statusTop]}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
         <Text style={styles.statusText}>{statusLabel}</Text>
-      </View>
+      </View> : null}
     </View>
   );
 }
@@ -130,6 +142,9 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
   },
+  pricePin: { minWidth: 62, maxWidth: 92, height: 32, paddingHorizontal: 9, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.forest, borderWidth: 2, borderColor: colors.white, boxShadow: '0 3px 10px rgba(0,0,0,0.22)' },
+  pricePinSelected: { backgroundColor: colors.accent, transform: [{ scale: 1.08 }] },
+  pricePinText: { color: colors.white, fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] },
   statusPill: {
     alignItems: 'center',
     backgroundColor: colors.white,
@@ -141,7 +156,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     position: 'absolute',
+    zIndex: 21,
   },
+  statusTop: { bottom: undefined, top: 10 },
   statusText: {
     color: colors.forest,
     fontSize: 11,
