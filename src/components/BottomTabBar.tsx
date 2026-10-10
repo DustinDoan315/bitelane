@@ -13,9 +13,9 @@ type BottomTabBarProps = {
 };
 
 const tabs: Array<{ key: MainTab; labelKey: string; icon: IconName }> = [
-  { key: 'home', labelKey: 'tabs.pick', icon: 'home-outline' },
-  { key: 'history', labelKey: 'tabs.history', icon: 'history' },
+  { key: 'home', labelKey: 'tabs.pick', icon: 'magnify' },
   { key: 'saved', labelKey: 'tabs.saved', icon: 'heart-outline' },
+  { key: 'profile', labelKey: 'tabs.profile', icon: 'account-outline' },
 ];
 
 export function BottomTabBar({ bottomInset = 0, selectedTab, onSelect }: BottomTabBarProps) {

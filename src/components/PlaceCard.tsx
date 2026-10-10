@@ -3,22 +3,21 @@ import { useTranslation } from 'react-i18next';
 import type { Place } from '../types';
 import { colors } from '../theme';
 import { Icon } from './Icon';
-import { PlaceRating } from './PlaceRating';
 import { PlaceThumbnail } from './PlaceThumbnail';
 import { SaveButton } from './SaveButton';
+import { formatRouteDistance, marketLocale } from '../services/market';
 
 export function PlaceCard({ place, saved, onOpen, onSave, distance, subtitle, cornerActions = false, onRemove, removeLabel }: {
   place: Place; saved: boolean; onOpen: () => void; onSave: () => void; distance?: number; subtitle?: string; cornerActions?: boolean; onRemove?: () => void; removeLabel?: string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return <View style={styles.card}>
     <Pressable accessibilityRole="button" accessibilityLabel={t('app.openPlace', { name: place.name })} onPress={onOpen} style={[styles.content, cornerActions && styles.historyContent]}>
       <PlaceThumbnail accessibilityLabel={t('app.placeImage', { name: place.name })} place={place} tone="green" />
       <View style={styles.copy}>
         {subtitle ? <Text numberOfLines={1} style={styles.subtitle}>{subtitle}</Text> : null}
         <Text numberOfLines={cornerActions ? 2 : 1} style={styles.name}>{place.name}</Text>
-        <PlaceRating place={place} />
-        {distance !== undefined ? <Text numberOfLines={1} style={styles.distance}>{t('app.distance', { meters: Math.round(distance / 10) * 10 })}</Text> : null}
+        {distance !== undefined ? <Text numberOfLines={1} style={styles.distance}>{t('app.distanceFormatted', { distance: formatRouteDistance(distance, place.countryCode, marketLocale(place.countryCode, i18n.language)) })}</Text> : null}
         {place.vegetarian && !cornerActions ? <Text numberOfLines={1} style={styles.tag}>{t('app.vegetarianTag')}</Text> : null}
       </View>
     </Pressable>

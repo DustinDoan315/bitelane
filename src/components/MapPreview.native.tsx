@@ -4,11 +4,10 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { colors } from '../theme';
-import { formatRating } from '../services/format';
+import { formatMoneyCompact, marketLocale } from '../services/market';
 import type { Coordinate } from '../types';
 import type { MapPreviewProps } from './MapPreview';
 import { PlaceThumbnail } from './PlaceThumbnail';
-import { formatVndCompact } from '../services/format';
 
 const emptyCoordinates: Coordinate[] = [];
 
@@ -20,7 +19,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
     [route],
   );
   const hasOverlay = !!children;
-  const fitCoordinates = useMemo(() => [...coordinates, ...foodOffers.map(({ place }) => place.coordinate)], [coordinates, foodOffers]);
+  const fitCoordinates = useMemo(() => [...coordinates, ...places.map(({ coordinate }) => coordinate), ...foodOffers.map(({ place }) => place.coordinate)], [coordinates, places, foodOffers]);
   const start = coordinates[0];
   const end = coordinates[coordinates.length - 1];
   const live = route?.source === 'live';
@@ -79,23 +78,23 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
         ) : null}
         <Marker coordinate={start} pinColor={colors.forest} />
         <Marker coordinate={end} pinColor={colors.accent} />
-        {places.map((place) => <Marker key={place.id} coordinate={place.coordinate} description={place.rating !== undefined ? t('app.ratingLabel', { value: formatRating(place.rating, i18n.language === 'vi' ? 'vi-VN' : 'en-US') }) : undefined} title={place.name} onPress={() => onPlacePress?.(place)}>
+        {places.filter((place) => !foodOffers.some((offer) => offer.place.id === place.id)).map((place) => <Marker key={place.id} coordinate={place.coordinate} title={place.name} onPress={() => onPlacePress?.(place)}>
           <View style={styles.marker}>
             <PlaceThumbnail accessibilityLabel={place.name} place={place} size={42} tone="green" />
-            {place.rating !== undefined ? <View style={styles.pinRating}><Text style={styles.pinRatingText}>★{formatRating(place.rating, i18n.language === 'vi' ? 'vi-VN' : 'en-US')}</Text></View> : null}
           </View>
         </Marker>)}
         {foodOffers.map((offer) => {
           const selected = offer.id === selectedOfferId;
-          const price = formatVndCompact(offer.priceRangeVnd.min, offer.priceRangeVnd.max);
-          const foodName = offer.itemName ?? offer.requestedFood ?? offer.suggestedFood ?? t(`app.categories.${offer.place.category}`);
-          return <Marker key={offer.id} coordinate={offer.place.coordinate} description={`${foodName} · ${price}`} title={offer.place.name} onPress={() => onOfferPress?.(offer)}>
+          const price = formatMoneyCompact(offer.amount, offer.currency, marketLocale(offer.place.countryCode, i18n.language));
+          const foodName = offer.itemName;
+          const evidence = t('app.reportedPriceShort');
+          return <Marker key={offer.id} accessibilityLabel={`${offer.place.name}, ${foodName}, ${price}, ${evidence}`} accessibilityRole="button" accessibilityState={{ selected }} coordinate={offer.place.coordinate} description={`${foodName} · ${price} · ${evidence}`} title={offer.place.name} onPress={() => onOfferPress?.(offer)}>
             <View style={[styles.pricePin, selected && styles.pricePinSelected]}><Text numberOfLines={1} style={styles.pricePinText}>{price}</Text></View>
           </Marker>;
         })}
       </MapView> : null}
       {children}
-      {!hideStatus ? <View style={[styles.statusPill, children && styles.statusTop]}>
+      {!hideStatus ? <View style={[styles.statusPill, children ? styles.statusTop : undefined]}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
         <Text style={styles.statusText}>{statusLabel}</Text>
       </View> : null}
@@ -125,22 +124,6 @@ const styles = StyleSheet.create({
     height: 42,
     position: 'relative',
     width: 42,
-  },
-  pinRating: {
-    backgroundColor: colors.yellow,
-    borderColor: colors.peach,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 3,
-    paddingVertical: 1,
-    position: 'absolute',
-    right: -12,
-    top: -8,
-  },
-  pinRatingText: {
-    color: colors.accent,
-    fontSize: 9,
-    fontWeight: '800',
   },
   pricePin: { minWidth: 62, maxWidth: 92, height: 32, paddingHorizontal: 9, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.forest, borderWidth: 2, borderColor: colors.white, boxShadow: '0 3px 10px rgba(0,0,0,0.22)' },
   pricePinSelected: { backgroundColor: colors.accent, transform: [{ scale: 1.08 }] },

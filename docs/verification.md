@@ -1,5 +1,7 @@
 # Verification record
 
+The checks below were recorded on 2026-09-08 for the earlier Vietnam-only version. They do not verify the international, evidence-only revision now in the source tree. That revision has not yet had its live-provider or UI smoke checks rerun.
+
 Date: 2026-09-08 (Asia/Ho_Chi_Minh)
 
 ## Automated and build checks

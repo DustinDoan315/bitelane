@@ -8,23 +8,19 @@ import { PlaceThumbnail } from '../components/PlaceThumbnail';
 import { SaveButton } from '../components/SaveButton';
 import { getRoute } from '../services/routeService';
 import { getNavigationUrl } from '../services/navigationService';
-import { formatVnd } from '../services/format';
+import { currencyForCountry, formatMoney, marketLocale, normalizeCurrencyAmount } from '../services/market';
 import { colors } from '../theme';
 
 export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, saved, initialReportOpen = false, onSave, onVisit, onReport, onBack }: {
-  offer: FoodOffer | null; place: Place; journey: Journey | null; baseRoute: RouteData | null; reports: MenuReport[]; saved: boolean; initialReportOpen?: boolean; onSave: () => void; onVisit: () => void; onReport: (itemName: string, priceVnd: number) => void; onBack: () => void;
+  offer: FoodOffer | null; place: Place; journey: Journey | null; baseRoute: RouteData | null; reports: MenuReport[]; saved: boolean; initialReportOpen?: boolean; onSave: () => void; onVisit: () => void; onReport: (itemName: string, amount: number, currency: MenuReport['currency']) => void; onBack: () => void;
 }) {
   const { t, i18n } = useTranslation();
+  const currency = offer?.currency ?? currencyForCountry(place.countryCode) ?? 'VND';
+  const locale = marketLocale(place.countryCode, i18n.language);
   const offerPrice = offer
-    ? `${offer.priceRangeVnd.min === offer.priceRangeVnd.max
-      ? formatVnd(offer.priceRangeVnd.min)
-      : `${formatVnd(offer.priceRangeVnd.min)}–${formatVnd(offer.priceRangeVnd.max)}`} / ${t('app.person')}`
+    ? `${formatMoney(offer.amount, offer.currency, locale)} / ${t('app.person')}`
     : null;
-  const offerEvidence = offer?.evidence === 'user_report'
-    ? t('app.reportedPrice')
-    : offer
-      ? t(offer.fit === 'likely' ? 'app.estimatedPriceLikely' : 'app.estimatedPricePossible')
-      : null;
+  const offerEvidence = offer ? t('app.reportedPrice') : null;
   const [route, setRoute] = useState<RouteData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +36,7 @@ export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, 
     const id = ++request.current;
     setLoading(true); setError(null);
     try {
-      const next = await getRoute([journey.origin.coordinate, place.coordinate, journey.destination.coordinate]);
+      const next = await getRoute([journey.origin.coordinate, place.coordinate, journey.destination.coordinate], journey.origin.countryCode);
       if (id === request.current) setRoute(next);
     } catch (e) { if (id === request.current) setError(e instanceof Error ? e.message : 'networkError'); }
     finally { if (id === request.current) setLoading(false); }
@@ -49,15 +45,15 @@ export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, 
     setError(null);
     try { await Linking.openURL(url); } catch { setError('navigationError'); }
   };
-  const priceVnd = Number(priceText.replace(/\D/g, ''));
+  const amount = Number(currency === 'VND' ? priceText.replace(/\D/g, '') : priceText.replace(',', '.').replace(/[^\d.]/g, ''));
+  const normalizedAmount = normalizeCurrencyAmount(amount, currency);
+  const amountValid = Number.isFinite(amount) && normalizedAmount > 0 && amount <= 10000000;
   const submitReport = () => {
-    if (!itemName.trim() || !Number.isInteger(priceVnd) || priceVnd <= 0) return;
-    onReport(itemName, priceVnd);
+    if (!itemName.trim() || !amountValid) return;
+    onReport(itemName, normalizedAmount, currency);
     setItemName(''); setPriceText(''); setReportOpen(false); setReportNotice(true);
   };
-  const offerLabel = offer?.itemName ?? (offer?.requestedFood || offer?.suggestedFood
-    ? t('app.estimatedQuery', { food: offer.requestedFood ?? offer.suggestedFood })
-    : t('app.estimatedMeal', { category: t(`app.categories.${place.category}`) }));
+  const offerLabel = offer?.itemName;
   return <ScrollView contentContainerStyle={styles.page}>
     <ActionButton secondary label={t('app.back')} onPress={onBack} />
     <View style={styles.hero}>
@@ -67,7 +63,7 @@ export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, 
         {offer ? <Text style={styles.mealName}>{offerLabel}</Text> : null}
         <Text style={styles.title}>{place.name}</Text>
         {offer ? <Text style={styles.offerPrice}>{offerPrice}</Text> : null}
-        {offer ? <Text style={styles.small}>{offerEvidence}</Text> : null}
+        {offer ? <Text style={styles.small}>{offerEvidence} · {new Date(offer.reportedAt).toLocaleDateString(locale)}</Text> : null}
       </View>
     </View>
     <View style={styles.primaryActions}>
@@ -82,31 +78,32 @@ export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, 
         <Text style={styles.body}>{place.openingHours || t('app.hoursUnknown')}</Text>
         <Text style={styles.small}>{t('app.hoursNote')}</Text>
       </View>
-      {!offer ? <View style={styles.factBlock}><Text style={styles.label}>{t('app.price')}</Text><Text style={styles.body}>{t('app.priceUnknown')}</Text></View> : null}
+      {!offer ? <View style={styles.factBlock}><Text style={styles.label}>{t('app.price')}</Text><Text style={styles.body}>{reports.length ? t('app.reportedPrice') : t('app.priceUnknown')}</Text></View> : null}
       {place.vegetarian ? <Text style={styles.body}>{t('app.vegetarianNote')}</Text> : null}
     </View>
+    {journey && baseRoute ? <>
+      <MapPreview height={220} route={route ?? baseRoute} places={[place]} isLoading={loading} />
+      {loading ? <ActivityIndicator color={colors.forest} /> : null}
+      {route ? <Text style={styles.label}>{t(route.mode === 'motorcycle' ? 'app.detour' : 'app.detourDriving', { minutes: Math.ceil(Math.max(0, route.durationSeconds - baseRoute.durationSeconds) / 60) })}</Text> : null}
+      {!route ? <ActionButton secondary disabled={loading} label={t('app.checkDetour')} onPress={() => void checkDetour()} /> : null}
+      <Text style={styles.small}>{t('app.detourNote')}</Text>
+    </> : null}
     <View style={styles.reportCard}>
       <Text style={styles.label}>{t('app.reportMenuTitle')}</Text>
       <Text style={styles.small}>{t('app.reportMenuHelp')}</Text>
       {reports.length ? reports.slice(0, 3).map((report) => <View key={report.id} style={styles.reportRow}>
-        <Text style={styles.body}>{report.itemName} · {formatVnd(report.priceVnd)}</Text>
-        <Text style={styles.small}>{t('app.reportedPrice')} · {new Date(report.reportedAt).toLocaleDateString(i18n.language)}</Text>
+        <Text style={styles.body}>{report.itemName} · {formatMoney(report.amount, report.currency, locale)}</Text>
+        <Text style={styles.small}>{t('app.reportedPrice')} · {new Date(report.reportedAt).toLocaleDateString(locale)}</Text>
       </View>) : <Text style={styles.small}>{t('app.reportEmpty')}</Text>}
       {reportOpen ? <>
         <TextInput accessibilityLabel={t('app.reportItemLabel')} value={itemName} maxLength={120} onChangeText={setItemName} placeholder={t('app.reportItemPlaceholder')} placeholderTextColor={colors.secondaryText} style={styles.input} />
-        <TextInput accessibilityLabel={t('app.reportPriceLabel')} value={priceText} onChangeText={setPriceText} keyboardType="numeric" placeholder={t('app.reportPricePlaceholder')} placeholderTextColor={colors.secondaryText} style={styles.input} />
-        <ActionButton disabled={!itemName.trim() || !Number.isInteger(priceVnd) || priceVnd <= 0} label={t('app.reportSubmit')} onPress={submitReport} />
+        <Text style={styles.label}>{t('app.reportPriceLabel', { currency })}</Text>
+        <TextInput accessibilityLabel={t('app.reportPriceLabel', { currency })} value={priceText} onChangeText={setPriceText} keyboardType="decimal-pad" placeholder={t('app.reportPricePlaceholder')} placeholderTextColor={colors.secondaryText} style={styles.input} />
+        <ActionButton disabled={!itemName.trim() || !amountValid} label={t('app.reportSubmit')} onPress={submitReport} />
         <ActionButton secondary label={t('app.reportCancel')} onPress={() => { setReportOpen(false); setReportNotice(false); }} />
       </> : <ActionButton secondary label={t('app.reportMenuTitle')} onPress={() => { setReportOpen(true); setReportNotice(false); }} />}
       {reportNotice ? <Text style={styles.saved}>{t('app.reportSaved')}</Text> : null}
     </View>
-    {journey && baseRoute ? <>
-      <MapPreview height={220} route={route ?? baseRoute} places={[place]} isLoading={loading} />
-      <ActionButton secondary disabled={loading} label={t('app.checkDetour')} onPress={() => void checkDetour()} />
-      {loading ? <ActivityIndicator color={colors.forest} /> : null}
-      {route ? <Text style={styles.label}>{t('app.detour', { minutes: Math.ceil(Math.max(0, route.durationSeconds - baseRoute.durationSeconds) / 60) })}</Text> : null}
-      <Text style={styles.small}>{t('app.detourNote')}</Text>
-    </> : null}
     {error ? <Text accessibilityRole="alert" style={styles.error}>{t(`app.errors.${error}`, { defaultValue: t('app.errors.networkError') })}</Text> : null}
     <View style={styles.secondaryActions}>
       <Text style={styles.sectionLabel}>{t('app.morePlaceActions')}</Text>
@@ -116,7 +113,7 @@ export function PlaceDetailsScreen({ offer, place, journey, baseRoute, reports, 
       <Text style={styles.small}>{t('app.visitNote')}</Text>
       <LinkAction label={t('app.viewSource')} onPress={() => void open(place.sourceUrl)} />
     </View>
-    <Text style={styles.small}>{t('app.fetched', { date: new Date(place.fetchedAt).toLocaleString(i18n.language) })}</Text>
+    <Text style={styles.small}>{t('app.fetched', { date: new Date(place.fetchedAt).toLocaleString(locale) })}</Text>
   </ScrollView>;
 }
 function LinkAction({ label, onPress }: { label: string; onPress: () => void }) {

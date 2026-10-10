@@ -1,18 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import i18n from '../i18n';
+import i18n, { defaultLanguage } from '../i18n';
 import type { BudgetSettings, Candidate, Journey, Place, RouteData, StoredState } from '../types';
 import { findPlaces } from '../services/placeService';
 import { findFoodOffers } from '../services/menuService';
-import { getCommuteRoute } from '../services/routeService';
+import { getCommuteRoute, getRoute } from '../services/routeService';
 import { parseStoredState } from '../services/validation';
-import { matchesFoodType, normalizeFood } from '../services/foodSuggestionService';
+import { defaultBudget } from '../services/market';
 
 const STORAGE_KEY = 'bitelane:v1';
 const initialState = (): StoredState => ({
-  version: 2, journey: null, preferences: { vegetarianOnly: false, hideVisited: false },
-  budget: { maxVndPerPerson: 50000, dishQuery: '' }, reports: [], saved: [], visits: [],
-  language: i18n.resolvedLanguage === 'vi' ? 'vi' : 'en', hasSeenOnboarding: false,
+  version: 3, journey: null, preferences: { vegetarianOnly: false, hideVisited: false, maxDetourMinutes: 10 },
+  budget: defaultBudget('VND'), reports: [], saved: [], visits: [],
+  language: i18n.resolvedLanguage === 'vi' || i18n.resolvedLanguage === 'en' ? i18n.resolvedLanguage : defaultLanguage, hasSeenOnboarding: false,
 });
 
 export function useBiteLane() {
@@ -21,7 +21,8 @@ export function useBiteLane() {
   const [storageError, setStorageError] = useState(false);
   const [route, setRoute] = useState<RouteData | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [phase, setPhase] = useState<'idle' | 'route' | 'places'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'route' | 'places' | 'detours'>('idle');
+  const [detours, setDetours] = useState<Record<string, number | null>>({});
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
   const writeQueue = useRef(Promise.resolve());
@@ -49,13 +50,30 @@ export function useBiteLane() {
 
   const refresh = useCallback(async (journey: Journey) => {
     const id = ++requestId.current;
-    setError(null); setRoute(null); setCandidates([]); setPhase('route');
+    setError(null); setRoute(null); setCandidates([]); setDetours({}); setPhase('route');
     try {
       const nextRoute = await getCommuteRoute(journey);
       if (id !== requestId.current) return;
       setRoute(nextRoute); setPhase('places');
       const results = await findPlaces(nextRoute);
-      if (id === requestId.current) setCandidates(results);
+      if (id !== requestId.current) return;
+      setCandidates(results);
+      setPhase('detours');
+      const shortlist = results.slice(0, 8); // shortcut: only the 8 nearest venues get routed detours, expand after adding a bounded routing matrix.
+      const nextDetours: Record<string, number | null> = {};
+      let cursor = 0;
+      await Promise.all(Array.from({ length: Math.min(2, shortlist.length) }, async () => {
+        while (cursor < shortlist.length) {
+          const candidate = shortlist[cursor++];
+          try {
+            const stopRoute = await getRoute([journey.origin.coordinate, candidate.place.coordinate, journey.destination.coordinate], journey.origin.countryCode);
+            nextDetours[candidate.place.id] = Math.ceil(Math.max(0, stopRoute.durationSeconds - nextRoute.durationSeconds) / 60);
+          } catch {
+            nextDetours[candidate.place.id] = null;
+          }
+        }
+      }));
+      if (id === requestId.current) setDetours(nextDetours);
     } catch (e) {
       if (id === requestId.current) setError(e instanceof Error ? e.message : 'serviceUnavailable');
     } finally {
@@ -72,14 +90,7 @@ export function useBiteLane() {
     return candidates.filter(({ place }) => (!state.preferences.vegetarianOnly || place.vegetarian)
       && (!state.preferences.hideVisited || !visited.has(place.id)));
   }, [candidates, state.preferences, state.visits]);
-  const foodVisible = useMemo(() => {
-    const query = normalizeFood(state.budget.dishQuery);
-    const reportedFoodPlaceIds = query
-      ? new Set(state.reports.filter((report) => normalizeFood(report.itemName).includes(query)).map((report) => report.placeId))
-      : new Set<string>();
-    return visible.filter(({ place }) => matchesFoodType(place, query) || reportedFoodPlaceIds.has(place.id));
-  }, [visible, state.budget.dishQuery, state.reports]);
-  const offers = useMemo(() => findFoodOffers(foodVisible, state.reports, state.budget), [foodVisible, state.reports, state.budget]);
+  const offers = useMemo(() => findFoodOffers(visible, state.reports, state.budget), [visible, state.reports, state.budget]);
 
   const toggleSaved = (place: Place) => setState((current) => ({ ...current,
     saved: current.saved.some((p) => p.id === place.id) ? current.saved.filter((p) => p.id !== place.id) : [place, ...current.saved],
@@ -91,11 +102,11 @@ export function useBiteLane() {
     const visitedAt = new Date().toISOString();
     return { ...current, visits: [{ id: `${place.id}/${visitedAt}`, place, visitedAt }, ...current.visits] };
   });
-  const addMenuReport = (place: Place, itemName: string, priceVnd: number) => setState((current) => ({
+  const addMenuReport = (place: Place, itemName: string, amount: number, currency: BudgetSettings['currency']) => setState((current) => ({
     ...current,
-    reports: [{ id: `${place.id}/${Date.now()}`, placeId: place.id, itemName: itemName.trim(), priceVnd, reportedAt: new Date().toISOString(), source: 'user_report' }, ...current.reports],
+    reports: [{ id: `${place.id}/${Date.now()}`, placeId: place.id, itemName: itemName.trim(), amount, currency, reportedAt: new Date().toISOString(), source: 'user_report' }, ...current.reports],
   }));
 
   const setBudget = (budget: BudgetSettings) => setState((current) => ({ ...current, budget }));
-  return { state, setState, ready, storageError, route, visible: foodVisible, offers, phase, error, refresh, toggleSaved, recordVisit, addMenuReport, setBudget };
+  return { state, setState, ready, storageError, route, visible, offers, detours, phase, error, refresh, toggleSaved, recordVisit, addMenuReport, setBudget };
 }

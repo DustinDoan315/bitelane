@@ -10,16 +10,16 @@ The prior app displayed static meals, prices, ratings, detours, and yesterday's 
 
 ## Implemented in this revision
 
-- Discover: a route-first map with a floating route summary and compact food-price pins; filters sit below the map, and selecting a pin shows its food, venue, price evidence, save action, and a routed extra-ride estimate. Budget and dish controls are compact until opened. Offers remain local reports or clearly labeled category/cuisine estimates.
-- Filters: vegetarian options explicitly tagged by contributors; hide user-confirmed visited places. Budget matching supports per-person limits and dish queries against named reports; blank queries include broad estimates for venues without menu data, while keeping every source label explicit.
-- Place details: available cuisine/address/raw opening-hours information, source and retrieval time, optional routing through the stop, and directions to the actual place coordinate.
-- Saved: persistent future shortlist with add/remove and detail access.
-- History: persistent, dated, user-confirmed visits; reversible mistaken entries. Navigation clicks do not imply eating.
-- Empty, loading, unavailable, unsupported-route, and local-storage failure states. Vietnamese-first UI with English available. Responsive width and native map support.
+- One trip setup for Vietnam, the UK, the US, and Eurozone countries. The selected market determines currency, number format, distance units, and route mode; start and destination must be in the same supported country.
+- One list/map results screen for Vietnamese and international users. Results use the same route, budget, detour limit, and filters. Known local meal reports are ranked ahead of venues with unknown prices; unknown-price venues appear only when no dish query is active.
+- Prices are dated, device-local user reports. The app no longer generates dishes, price ranges, ratings, or food photos to fill missing data. Every reported price is labeled unverified.
+- Place details show the available map-contributor fields, source and retrieval time, directions to the selected coordinate, and an optional routed stop comparison.
+- Saved places and confirmed visit history remain local and persistent. Language selection is available in profile; UI copy supports Vietnamese and English.
+- Empty, loading, unavailable, unsupported-route, and local-storage failure states are represented in the UI.
 
 ## Known constraints
 
-Discovery now defaults to Valhalla's actual motorcycle costing profile, without traffic. Distances from the route are approximate geometric distances, not access feasibility; a river or divided road can make a nearby venue inconvenient. The detail calculation estimates the routed stop cost but excludes waiting, parking, and meals. Nearby venues may have incomplete or stale OSM tags. Estimated prices are product heuristics, not menu data. Saved snapshots are historical copies with retrieval dates, not freshly verified listings.
+Public map and routing providers may return incomplete or stale data. Distances from the route are approximate geometry, not access feasibility; a river or divided road can make a nearby venue inconvenient. Detours use a routed comparison without live traffic and exclude waiting, parking, and meals. Current prices and menus are not supplied by the map provider, so reported prices are local, unverified, and unavailable to other users. The current public endpoints are development services, not a production capacity plan. Saved snapshots are historical copies with retrieval dates, not freshly verified listings.
 
 ## Next release: prove a reliable core
 

@@ -1,9 +1,10 @@
-export type MainTab = 'home' | 'history' | 'saved';
+export type MainTab = 'home' | 'saved' | 'profile';
 export type Coordinate = { latitude: number; longitude: number };
-export type AddressSuggestion = { id: string; label: string; coordinate: Coordinate; countryCode?: 'VN' };
+export type CurrencyCode = 'VND' | 'GBP' | 'EUR' | 'USD';
+export type AddressSuggestion = { id: string; label: string; coordinate: Coordinate; countryCode: string };
 export type Journey = { origin: AddressSuggestion; destination: AddressSuggestion };
 export type RouteMode = 'motorcycle' | 'driving';
-export type RouteData = { coordinates: Coordinate[]; distanceMeters: number; durationSeconds: number; mode: RouteMode; source: 'live' };
+export type RouteData = { coordinates: Coordinate[]; distanceMeters: number; durationSeconds: number; mode: RouteMode; countryCode: string; source: 'live' };
 export type Place = {
   id: string;
   name: string;
@@ -16,40 +17,38 @@ export type Place = {
   menuUrl?: string;
   imageUrl?: string;
   foodTags?: string[];
-  rating?: number;
-  ratingCount?: number;
   vegetarian: boolean;
+  countryCode: string;
   sourceUrl: string;
   fetchedAt: string;
 };
 export type Candidate = { place: Place; distanceFromRouteMeters: number };
-export type BudgetSettings = { maxVndPerPerson: number; dishQuery: string };
+export type BudgetSettings = { maxPerPerson: number; currency: CurrencyCode; countryCode: string; dishQuery: string };
 export type MenuReport = {
   id: string;
   placeId: string;
   itemName: string;
-  priceVnd: number;
+  amount: number;
+  currency: CurrencyCode;
   reportedAt: string;
   source: 'user_report';
 };
-export type PriceRangeVnd = { min: number; max: number };
 export type FoodOffer = {
   id: string;
   placeId: string;
-  itemName?: string;
-  requestedFood?: string;
-  suggestedFood?: string;
-  priceRangeVnd: PriceRangeVnd;
-  evidence: 'user_report' | 'estimated';
-  fit: 'exact' | 'likely' | 'possible';
-  reportedAt?: string;
+  itemName: string;
+  amount: number;
+  currency: CurrencyCode;
+  evidence: 'user_report';
+  withinBudget: boolean;
+  reportedAt: string;
   place: Place;
   distanceFromRouteMeters: number;
 };
 export type Visit = { id: string; place: Place; visitedAt: string };
-export type Preferences = { vegetarianOnly: boolean; hideVisited: boolean };
+export type Preferences = { vegetarianOnly: boolean; hideVisited: boolean; maxDetourMinutes: number };
 export type StoredState = {
-  version: 2;
+  version: 3;
   journey: Journey | null;
   preferences: Preferences;
   budget: BudgetSettings;

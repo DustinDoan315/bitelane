@@ -5,8 +5,7 @@ import 'leaflet/dist/leaflet.css';
 
 import { colors } from '../theme';
 import type { Coordinate, FoodOffer, Place, RouteData } from '../types';
-import { formatRating, formatVndCompact } from '../services/format';
-import { getPlaceImage } from '../services/placeImageService';
+import { formatMoneyCompact, marketLocale } from '../services/market';
 
 export type MapPreviewProps = {
   route?: RouteData | null;
@@ -30,6 +29,7 @@ const emptyOffers: FoodOffer[] = [];
 type LeafletModule = typeof import('leaflet');
 
 function WebMap({ coordinates, fitCoordinates, fullScreen, hasOverlay, live, places, foodOffers, selectedOfferId, onPlacePress, onOfferPress, ratingLocale }: { coordinates: Coordinate[]; fitCoordinates: Coordinate[]; fullScreen: boolean; hasOverlay: boolean; live: boolean; places: Place[]; foodOffers: FoodOffer[]; selectedOfferId?: string; onPlacePress?: (place: Place) => void; onOfferPress?: (offer: FoodOffer) => void; ratingLocale: string }) {
+  const { t } = useTranslation();
   const mapElementRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import('leaflet').Map | null>(null);
   const leafletRef = useRef<LeafletModule | null>(null);
@@ -103,32 +103,36 @@ function WebMap({ coordinates, fitCoordinates, fullScreen, hasOverlay, live, pla
     placesRef.current.forEach((marker) => marker.removeFrom(map));
     let cancelled = false;
     const escapeHtml = (value: string) => value.replace(/[&<>\"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character] ?? character));
-    const addMarkers = async () => {
-      const markerData = foodOffers.length
-        ? foodOffers.map((offer) => ({ place: offer.place, offer, imageUrl: null }))
-        : await Promise.all(places.map(async (place) => ({ place, offer: null, imageUrl: await getPlaceImage(place) })));
+    const addMarkers = () => {
+      const pricedPlaceIds = new Set(foodOffers.map((offer) => offer.place.id));
+      const markerData = [
+        ...places.filter((place) => !pricedPlaceIds.has(place.id)).map((place) => ({ place, offer: null, imageUrl: place.imageUrl ?? null })),
+        ...foodOffers.map((offer) => ({ place: offer.place, offer, imageUrl: offer.place.imageUrl ?? null })),
+      ];
       if (cancelled) return;
       placesRef.current = markerData.map(({ place, offer, imageUrl }) => {
         const selected = !!offer && offer.id === selectedOfferId;
-        const price = offer ? formatVndCompact(offer.priceRangeVnd.min, offer.priceRangeVnd.max) : null;
+        const price = offer ? formatMoneyCompact(offer.amount, offer.currency, marketLocale(place.countryCode, ratingLocale.startsWith('vi') ? 'vi' : 'en')) : null;
+        const item = offer?.itemName ?? null;
+        const evidence = offer ? t('app.reportedPriceShort') : null;
+        const label = offer ? `${place.name}, ${item}, ${price}, ${evidence}` : place.name;
         const image = imageUrl ? `<img alt="" src="${escapeHtml(imageUrl)}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;transform:rotate(45deg);" />` : '<span style="font-size:18px;transform:rotate(45deg);">🍜</span>';
-        const ratingBadge = place.rating !== undefined
-          ? `<span style="background:#FFE8B6;border:1px solid #FFD9B5;border-radius:8px;color:#F45124;font-size:9px;font-weight:800;left:27px;line-height:14px;padding:0 3px;position:absolute;top:-8px;transform:rotate(45deg);white-space:nowrap;">★${formatRating(place.rating, ratingLocale)}</span>`
-          : '';
         const width = Math.max(62, Math.min(92, (price?.length ?? 0) * 8 + 20));
         const icon = leaflet.divIcon({
           className: 'bitelane-food-marker',
           html: price
             ? `<div style="align-items:center;background:${selected ? colors.accent : colors.forest};border:2px solid #fff;border-radius:18px;box-shadow:0 3px 10px rgba(0,0,0,.22);color:#fff;display:flex;font-size:12px;font-weight:800;height:31px;justify-content:center;min-width:${width}px;padding:0 8px;white-space:nowrap;">${escapeHtml(price)}</div>`
-            : `<div style="align-items:center;background:#ffffff;border:3px solid #ffffff;border-radius:50% 50% 50% 0;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;height:42px;justify-content:center;position:relative;transform:rotate(-45deg);width:42px;">${image}${ratingBadge}</div>`,
+            : `<div style="align-items:center;background:#ffffff;border:3px solid #ffffff;border-radius:50% 50% 50% 0;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;height:42px;justify-content:center;position:relative;transform:rotate(-45deg);width:42px;">${image}</div>`,
           iconAnchor: price ? [width / 2, 16] : [21, 42], iconSize: price ? [width, 32] : [42, 42],
         });
-        const marker = leaflet.marker([place.coordinate.latitude, place.coordinate.longitude], { icon, title: place.name }).addTo(map);
+        const marker = leaflet.marker([place.coordinate.latitude, place.coordinate.longitude], { icon, title: label, keyboard: true }).addTo(map);
+        marker.getElement()?.setAttribute('aria-label', label);
+        marker.getElement()?.setAttribute('aria-pressed', String(selected));
         marker.on('click', () => offer ? onOfferPress?.(offer) : onPlacePress?.(place));
         return marker;
       });
     };
-    void addMarkers();
+    addMarkers();
     return () => {
       cancelled = true;
       placesRef.current.forEach((marker) => marker.removeFrom(map));
@@ -213,7 +217,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
     [route],
   );
   const hasOverlay = !!children;
-  const fitCoordinates = useMemo(() => [...coordinates, ...foodOffers.map(({ place }) => place.coordinate)], [coordinates, foodOffers]);
+  const fitCoordinates = useMemo(() => [...coordinates, ...places.map(({ coordinate }) => coordinate), ...foodOffers.map(({ place }) => place.coordinate)], [coordinates, places, foodOffers]);
   const statusLabel = isLoading
     ? t('commute.updatingRoute')
     : live && error
@@ -228,7 +232,7 @@ export function MapPreview({ route, isLoading = false, error, fullScreen = false
     <View style={[styles.map, !fullScreen && { height }, fullScreen && styles.fullScreenMap]}>
       {coordinates.length > 1 ? <WebMap coordinates={coordinates} fitCoordinates={fitCoordinates} fullScreen={fullScreen} hasOverlay={hasOverlay} live={live} places={places} foodOffers={foodOffers} selectedOfferId={selectedOfferId} onPlacePress={onPlacePress} onOfferPress={onOfferPress} ratingLocale={i18n.language === 'vi' ? 'vi-VN' : 'en-US'} /> : null}
       {children}
-      {!hideStatus ? <View style={[styles.statusPill, children && styles.statusTop]}>
+      {!hideStatus ? <View style={[styles.statusPill, children ? styles.statusTop : undefined]}>
         {isLoading ? <ActivityIndicator color={colors.forest} size="small" /> : null}
         <Text style={styles.statusText}>{statusLabel}</Text>
       </View> : null}

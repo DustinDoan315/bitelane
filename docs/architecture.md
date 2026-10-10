@@ -21,27 +21,27 @@ Do not ship a subscription until BiteLane has a clear recurring premium benefit.
 
 `useBiteLane` owns the persisted schema, hydration, sequential writes, route/place request generation IDs, filters, saves, and visit events. It guards stale results when a journey changes. Failed storage reads preserve the original value and display an error instead of overwriting it with empty data.
 
-`JourneySetupScreen` maintains isolated drafts. Editing an address clears its selected coordinate; only a selected search result can be submitted. Canceled edits do not modify the saved journey. Search starts after three typed characters with a short debounce, and each search discards stale results.
+`JourneySetupScreen` maintains isolated drafts. Photon results are restricted to supported markets; the destination search is restricted to the selected origin country. Editing an address clears its selected coordinate; only a selected search result can be submitted. The selected market sets the currency and default budget. Canceled edits do not modify the saved journey. Search starts after three typed characters with a short debounce, and each search discards stale results.
 
 ## Provider boundary
 
-1. `routeService.searchAddresses`: Photon GeoJSON → validated selectable location.
-2. `routeService.getCommuteRoute`: selected coordinates → Valhalla motorcycle geometry/distance/duration. An OSRM adapter remains available only for explicit development overrides. No guessed address coordinates or fallback lines.
-3. `placeService.findPlaces`: bounded Overpass query → named food venues → 750 m route corridor filter → proximity ordering. Node/way/relation source IDs are retained, with optional contributor-listed website/menu URLs, image URLs, and food metadata. Unknown fields remain absent. Missing images are resolved lazily through Wikimedia Commons using an exact venue-name match or a representative Vietnamese-food query.
-4. `PlaceDetailsScreen`: an explicit action requests start → place → destination; the duration difference is labeled as estimated extra motorbike time.
+1. `routeService.searchAddresses`: Photon GeoJSON → validated selectable location in Vietnam, the UK, the US, or a Eurozone country.
+2. `routeService.getCommuteRoute`: selected coordinates → Valhalla route geometry, distance, and duration using motorcycle costing in Vietnam and driving elsewhere. An OSRM adapter remains available for explicit development overrides. No guessed address coordinates or fallback lines.
+3. `placeService.findPlaces`: bounded country-scoped Overpass query → named food venues → 750 m route corridor filter → geometric-proximity ordering. Node/way/relation source IDs are retained, with optional contributor-listed website/menu URLs, image URLs, and food metadata. Unknown fields remain absent. No representative food photos are substituted when a venue image is missing.
+4. `useBiteLane`: calculates routed detours for a bounded shortlist, then exposes those venues to the result screen. `PlaceDetailsScreen` can calculate a fresh start → place → destination route and labels extra motorbike or driving time.
 5. `navigationService`: coordinate-based destination handoff. Does not write history.
 
 `transport` centralizes bounded short-lived caching, in-flight deduplication, timeouts, and HTTP errors. Provider payloads are untrusted; adapters validate expected fields before building domain values. No silent provider failover or fake data.
 
-`menuService` keeps price evidence separate from venue discovery. User reports become exact-but-unverified offers. When the food name is blank, a deterministic broad category/cuisine estimate creates up to 40 fallback options from real route venues; the UI labels these estimates and reports their range rather than inventing a named dish. A non-empty food query filters route venues using OSM name/cuisine/dish metadata and matching local reports before generating estimates.
+`menuService` keeps price evidence separate from venue discovery. Only dated local reports create meal offers; they remain explicitly unverified and device-local. Currency precision is normalized before saving or matching. The list shows affordable reported meals first and may show venues with unknown prices when no dish query is active. A dish query matches report item names; map tags do not invent menu items.
 
 ## Persistence
 
-AsyncStorage key `bitelane:v1` stores versioned `StoredState` schema version 2: selected journey, language, meaningful filters, applied per-person budget and dish query, local menu price reports, saved place snapshots, and timestamped confirmed visits. Version 1 records migrate with default budget settings and no reports. Runtime validation checks coordinates, provider IDs, source URLs, report prices, and dates on load. Budget fields are edited as a draft and persisted only when the user applies them. Writes are serialized to prevent older writes finishing after newer writes. Place retrieval timestamps are distinct from visit timestamps. In-memory provider caches are deliberately not persisted.
+AsyncStorage key `bitelane:v1` stores versioned `StoredState` schema version 3: selected journey and market, language, filters and maximum detour, per-person budget and dish query, local menu price reports, saved place snapshots, and timestamped confirmed visits. Version 1 and 2 records migrate to the current shape; old place and route addresses are assigned Vietnam as their legacy market. Runtime validation checks coordinates, country/currency values, provider IDs, source URLs, currency precision, report prices, and dates on load. Writes are serialized to prevent older writes finishing after newer writes. Place retrieval timestamps are distinct from visit timestamps. In-memory provider caches are deliberately not persisted.
 
 ## UI boundaries
 
-- Discover: live route map with a floating origin → destination pill and up to 12 unique price pins → compact food/budget and preference filters → selected offer card with evidence, local save, and routed extra-ride estimate. The full map and place details remain available.
+- Discover: route summary and editable setup → budget, detour, vegetarian, and visited filters → list/map switch showing the same ranked shortlist. A reported meal shows its price and report date; venues with unknown prices are labeled and are not described as meal matches.
 - Saved: intentions; saved place snapshots with detail access and unsave.
 - History: user-confirmed events, with timestamps and reversible mistakes.
 - Detail: available source fields, directions, calculate-stop, save, confirm visit, and a local unverified price-report form.
@@ -52,4 +52,4 @@ AsyncStorage key `bitelane:v1` stores versioned `StoredState` schema version 2: 
 
 The three public development endpoints must be replaced by managed or self-hosted capacity. A server gateway should own provider secrets, shared quotas, caching/licensing, telemetry, and provider adapters. When account sync or shared price reports are implemented, use Supabase Auth and define RLS policies and data retention before exposing tables. Keep Free-tier limitations and the solo-dev budget in the launch decision; no paid service is assumed or provisioned in this repository.
 
-Routing defaults to Valhalla's actual `motorcycle` costing profile and keeps an OSRM-compatible driving adapter only for intentional development overrides. Local reports and estimates make the budget flow useful immediately, but merchant or licensed menu data is required before promising verified availability or shared results. See the product plan for priorities and release gates.
+Routing uses Valhalla's motorcycle profile in Vietnam and driving elsewhere. The shortlist currently routes only the eight venues closest to the geometric route; raise that limit after moving to a bounded routing matrix or a managed provider. Local reports can help one device find known prices, but merchant or licensed menu data is required before promising verified availability or shared results. See the product plan for priorities and release gates.
